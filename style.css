@@ -20,3 +20,10 @@ body {
   from { background-position: 0% 0%; filter: brightness(1); }
   to { background-position: 0% 100%; filter: brightness(1.07); }
 }
+.cloud4 {
+  top: 75%;
+  left: -250px;
+  animation-duration: 70s;
+  animation-delay: 15s;
+  transform: scale(0.9);
+}
