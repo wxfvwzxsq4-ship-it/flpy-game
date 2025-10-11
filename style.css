@@ -10,4 +10,13 @@ body{
 }
 #board{
     background-image: url(flappybirdbg.png);
+
+}
+body {
+  animation: skyGlow 8s ease-in-out infinite alternate;
+}
+
+@keyframes skyGlow {
+  from { background-position: 0% 0%; filter: brightness(1); }
+  to { background-position: 0% 100%; filter: brightness(1.07); }
 }
