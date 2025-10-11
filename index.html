@@ -8,146 +8,76 @@
   <meta property="og:title" content="FLPY — The Flying Coin" />
   <meta property="og:description" content="Play FLPY and try to set the world record!" />
   <meta property="og:image" content="./flpy.png" />
-  <meta name="theme-color" content="#00b7ff" />
+  <meta name="theme-color" content="#0b1220" />
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      height: 100%;
-      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, Roboto, sans-serif;
-      color: #fff;
-      background: url('./bg-flpy.png') no-repeat center center fixed;
-      background-size: cover;
-      image-rendering: pixelated;
-    }
-
-    .wrap {
-      min-height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      text-align: center;
-      backdrop-filter: brightness(1.05);
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 40px;
-    }
-
-    header .brand {
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-      color: #fff;
-    }
-
-    header img {
-      width: 48px;
-      height: 48px;
-      margin-right: 10px;
-      image-rendering: pixelated;
-    }
-
-    header h1 {
-      font-size: 22px;
-      font-weight: 700;
-    }
-
-    main {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
-    }
-
-    .hero img {
-      width: 120px;
-      height: 120px;
-      margin-bottom: 20px;
-      image-rendering: pixelated;
-    }
-
-    .hero h2 {
-      font-size: 36px;
-      margin-bottom: 10px;
-    }
-
-    .hero p {
-      font-size: 18px;
-      margin-bottom: 24px;
-    }
-
-    .actions {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      appearance: none;
-      border: none;
-      cursor: pointer;
-      padding: 14px 28px;
-      border-radius: 12px;
-      font-weight: 700;
-      letter-spacing: .3px;
-      text-decoration: none;
-      transition: transform .08s ease, box-shadow .2s ease;
-    }
-
-    .btn-play {
-      background: #ffd028;
-      color: #2a2100;
-      box-shadow: 0 8px 24px rgba(255,208,40,.4);
-    }
-
-    .btn-play:hover {
-      transform: translateY(-2px);
-    }
-
-    .btn-ghost {
-      background: rgba(255,255,255,.2);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,.4);
-    }
-
-    footer {
-      text-align: center;
-      padding: 16px;
-      font-size: 13px;
-      color: rgba(255,255,255,.8);
-      text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
-    }
+    :root{ --bg:#0b1220; --fg:#e9eefb; --accent:#ffd028; --muted:#93a2c8; }
+    *{ box-sizing:border-box }
+    html,body{ height:100%; margin:0; background:radial-gradient(1200px 600px at 70% -10%, #1a2140 0%, #0b1220 46%, #070b16 100%); color:var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+    .wrap{ min-height:100%; display:grid; grid-template-rows:1fr auto; }
+    header{ padding:24px; display:flex; align-items:center; justify-content:space-between; max-width:1100px; margin:0 auto; width:100%; }
+    header .brand{ display:flex; gap:14px; align-items:center; text-decoration:none; color:var(--fg) }
+    header img{ width:48px; height:48px; image-rendering: pixelated }
+    header h1{ font-size:20px; margin:0; letter-spacing:.5px }
+    main{ display:grid; place-items:center; padding:40px 20px }
+    .hero{ text-align:center; max-width:780px }
+    .logo{ width:140px; height:140px; margin:0 auto 14px; image-rendering: pixelated; }
+    h2{ font-size:36px; margin:8px 0 8px }
+    p.lead{ color:var(--muted); font-size:18px; margin:0 0 24px }
+    .actions{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+    .btn{ appearance:none; border:none; cursor:pointer; padding:14px 22px; border-radius:14px; font-weight:700; letter-spacing:.3px; text-decoration:none; transition: transform .08s ease, box-shadow .2s ease; }
+    .btn-play{ background:var(--accent); color:#1a1400; box-shadow:0 8px 24px rgba(255,208,40,.25) }
+    .btn-play:hover{ transform: translateY(-1px) }
+    .btn-ghost{ background:rgba(255,255,255,.06); color:var(--fg); border:1px solid rgba(255,255,255,.12) }
+    .grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:16px; margin:28px auto 0; max-width:900px }
+    .card{ padding:16px; border:1px solid rgba(255,255,255,.08); border-radius:14px; background:rgba(0,0,0,.25) }
+    .card h3{ margin:0 0 6px; font-size:16px }
+    .card p{ margin:0; color:var(--muted); font-size:14px; line-height:1.4 }
+    footer{ color:#7f8db9; text-align:center; padding:22px; font-size:13px }
+    a.social{ color:#b9c7f0; text-decoration:none; margin:0 8px }
+    @media (max-width:480px){ h2{ font-size:28px } .logo{ width:110px; height:110px } }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <a class="brand" href="/">
-        <img src="./flpy.png" alt="FLPY logo">
-        <h1>FLPY</h1>
-      </a>
-      <a class="social" href="https://t.me/flpycommunity" target="_blank" rel="noopener" style="color:white;text-decoration:none;">Telegram</a>
-    </header>
+<div class="wrap">
+  <header>
+    <a class="brand" href="/">
+      <img src="./flpy.png" alt="FLPY logo" />
+      <h1>FLPY</h1>
+    </a>
+    <nav>
+      <a class="social" href="https://t.me/flpycommunity" target="_blank" rel="noopener">Telegram</a>
+      <!-- <a class="social" href="https://x.com/..." target="_blank" rel="noopener">X</a> -->
+    </nav>
+  </header>
 
-    <main>
-      <section class="hero">
-        <img src="./flpy.png" alt="FLPY Coin">
-        <h2>The Flying Coin — Ready?</h2>
-        <p>Tap, dodge, and try to set the world record. Every run counts.</p>
-        <div class="actions">
-          <a class="btn btn-play" href="./game.html">▶ Play FLPY</a>
-          <a class="btn btn-ghost" href="https://pump.fun" target="_blank">View on Pump.fun</a>
+  <main>
+    <section class="hero">
+      <img class="logo" src="./flpy.png" alt="FLPY coin" />
+      <h2>The Flying Coin — Ready?</h2>
+      <p class="lead">Tap, dodge, and try to set the world record. Every run counts.</p>
+      <div class="actions">
+        <a class="btn btn-play" href="./game.html">▶ Play FLPY</a>
+        <a class="btn btn-ghost" href="https://pump.fun" target="_blank" rel="noopener">View on Pump.fun</a>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Leaderboard (soon)</h3>
+          <p>Global best scores will appear here. Beat the record to be featured.</p>
         </div>
-      </section>
-    </main>
+        <div class="card">
+          <h3>Record Events</h3>
+          <p>When someone sets a world record, a site-wide celebration triggers.</p>
+        </div>
+        <div class="card">
+          <h3>Community</h3>
+          <p>Join the Telegram to share clips, scores, and feedback.</p>
+        </div>
+      </div>
+    </section>
+  </main>
 
-    <footer>© FLPY — play responsibly · built for fun</footer>
-  </div>
+  <footer>© FLPY — play responsibly · built for fun</footer>
+</div>
 </body>
 </html>
