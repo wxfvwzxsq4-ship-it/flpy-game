@@ -276,35 +276,47 @@
     if (!list) return;
     list.innerHTML = "<li>Loading…</li>";
 
-    const { data, error } = await supabase
-      .from('scores')
-      .select('wallet, score, created_at')
-      .order('score', { ascending: false })
-      .limit(10);
+ // Top 10 (meilleur score par wallet)
+const { data: top, error: topErr } = await supabase
+  .from("best_by_wallet")
+  .select("wallet, best_score")
+  .order("best_score", { ascending: false })
+  .limit(10);
 
-    if (error) {
-      list.innerHTML = "<li>Cannot load leaderboard.</li>";
-      return;
-    }
+if (topErr) {
+  console.error("[FLPY] Top10 error:", topErr);
+  list.innerHTML = "<li>Cannot load leaderboard.</li>";
+} else {
+  list.innerHTML = (top && top.length)
+    ? top.map((r,i)=>`<li>#${i+1} — <b>${r.best_score}</b> pts · ${short(r.wallet)}</li>`).join("")
+    : "<li>No scores yet. Be the first!</li>";
+}
 
-    list.innerHTML = data.map((r, i) =>
-      `<li>#${i+1} — <b>${r.score}</b> pts · ${short(r.wallet)}</li>`
-    ).join("");
+    // Rang perso : nb de wallets dont le best_score est STRICTEMENT supérieur au tien
+const wallet = localStorage.getItem("flpy_wallet");
+const myBest = Number(localStorage.getItem("flpy_highscore") || 0);
 
-    // Ta position (approx) si connecté
-    const wallet = localStorage.getItem('flpy_wallet');
-    if (you && wallet) {
-      // On calcule un rang approximatif : nombre de scores >= ton meilleur score
-      const myBest = Number(localStorage.getItem('flpy_highscore') || 0);
-      if (myBest > 0) {
-        const { data: cntData, error: cntErr } = await supabase
-          .from('scores')
-          .select('score', { count: 'exact', head: true })
-          .gte('score', myBest);
+if (you && wallet && myBest > 0) {
+  const { count, error: e1 } = await supabase
+    .from("best_by_wallet")
+    .select("wallet", { head: true, count: "exact" })
+    .gt("best_score", myBest);
 
-        const rank = !cntErr && cntData === null && typeof cntErr === 'object'
-          ? null
-          : (cntErr ? null : (cntErr ?? false));
+  let higher = 0;
+  if (!e1 && typeof count === "number") {
+    higher = count;
+  } else {
+    // Fallback au cas où count ne remonte pas (proxy/adblock)
+    const { data: rows, error: e2 } = await supabase
+      .from("best_by_wallet")
+      .select("wallet")
+      .gt("best_score", myBest);
+    if (!e2 && Array.isArray(rows)) higher = rows.length;
+  }
+
+  const rank = higher + 1; // personne au-dessus => #1
+  you.innerHTML = `Your best: <b>${myBest}</b> pts · Approx. rank: <b>#${rank}</b> (${short(wallet)})`;
+}
 
         // Petite subtilité Supabase head:true : le "count" est disponible via .count (SDK)
         const { count } = await supabase
