@@ -159,115 +159,112 @@
   <footer>© FLPY — play responsibly · built for fun</footer>
 
   <!-- ✅ Script Phantom fiable -->
-<script>
-(function(){
-  const btnPlay    = document.getElementById('btn-play');
-  const btnPhantom = document.getElementById('btn-phantom');
-  const elHS       = document.getElementById('last-highscore');
-  const elWallet   = document.getElementById('connected-wallet');
+  <script>
+  (function(){
+    const btnPlay    = document.getElementById('btn-play');
+    const btnPhantom = document.getElementById('btn-phantom');
+    const elHS       = document.getElementById('last-highscore');
+    const elWallet   = document.getElementById('connected-wallet');
 
-  const short = (addr) => addr ? addr.slice(0,4)+'...'+addr.slice(-4) : 'not connected';
+    const short = (addr) => addr ? addr.slice(0,4) + '...' + addr.slice(-4) : 'not connected';
 
-  function loadHighScore(){
-    const hs = localStorage.getItem('flpy_highscore');
-    elHS.textContent = (hs ?? '—');
-  }
-
-  function getProvider(){
-    return (window.solana?.isPhantom) ? window.solana : null;
-  }
-
-  async function connectFlow(){
-    const provider = getProvider();
-    if (!provider) {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      window.open(isMobile ? 'https://phantom.app/ul/browse' : 'https://phantom.app/', '_blank', 'noopener');
-      return;
+    function loadHighScore(){
+      const hs = localStorage.getItem('flpy_highscore');
+      elHS.textContent = (hs ?? '—');
     }
-    try{
-      const res = await provider.connect();
-      if (res?.publicKey) enablePlay(res.publicKey.toString());
-    }catch(e){
-      console.warn('Phantom connect refused/failed', e);
+
+    function getProvider(){
+      return (window.solana?.isPhantom) ? window.solana : null;
     }
-  }
 
-  function disablePlay(){
-    btnPlay.classList.add('is-disabled');
-    btnPlay.setAttribute('aria-disabled','true');
-    btnPlay.tabIndex = -1;
-    btnPlay.onclick = (e)=>{ e.preventDefault(); connectFlow(); };
-    elWallet.textContent = 'not connected';
-    btnPhantom.textContent = 'Connect Phantom';
-  }
-
-  function enablePlay(address){
-    btnPlay.classList.remove('is-disabled');
-    btnPlay.setAttribute('aria-disabled','false');
-    btnPlay.tabIndex = 0;
-    btnPlay.textContent = '▶ Play FLPY';
-
-    btnPlay.onclick = async (e) => {
-      e.preventDefault();
+    async function connectFlow(){
       const provider = getProvider();
-      if (!provider) return connectFlow();
-      try {
-        const res = await provider.connect({ onlyIfTrusted:true });
-        if (res?.publicKey) window.location.href = './game.html';
-        else await connectFlow();
-      } catch {
-        await connectFlow();
+      if (!provider) {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        window.open(isMobile ? 'https://phantom.app/ul/browse' : 'https://phantom.app/', '_blank', 'noopener');
+        return;
       }
-    };
+      try{
+        const res = await provider.connect();
+        if (res?.publicKey) enablePlay(res.publicKey.toString());
+      }catch(e){ console.warn('Phantom connect refused/failed', e); }
+    }
 
-    elWallet.textContent = short(address);
-    btnPhantom.textContent = 'Connected: ' + short(address);  // 👈 plus de parenthèse en trop
-    localStorage.setItem('flpy_wallet', address);
-  }
+    function disablePlay(){
+      btnPlay.classList.add('is-disabled');
+      btnPlay.setAttribute('aria-disabled','true');
+      btnPlay.tabIndex = -1;                         // ❗ non focusable
+      btnPlay.onclick = (e)=>{ e.preventDefault(); connectFlow(); };
+      elWallet.textContent = 'not connected';
+      btnPhantom.textContent = 'Connect Phantom';
+    }
 
-  async function tryAutoConnect(){
+    function enablePlay(address){
+      btnPlay.classList.remove('is-disabled');
+      btnPlay.setAttribute('aria-disabled','false');
+      btnPlay.tabIndex = 0;                          // redevient focusable
+      btnPlay.textContent = '▶ Play FLPY';
+
+      btnPlay.onclick = async (e) => {
+        e.preventDefault();
+        const provider = getProvider();
+        if (!provider) return connectFlow();
+        try {
+          const res = await provider.connect({ onlyIfTrusted:true });
+          if (res?.publicKey) window.location.href='./game.html';
+          else await connectFlow();
+        } catch { await connectFlow(); }
+      };
+
+      elWallet.textContent = short(address);
+      btnPhantom.textContent = 'Connected: ' + short(address));
+      localStorage.setItem('flpy_wallet', address);
+    }
+
+    async function tryAutoConnect(){
+      const provider = getProvider();
+      if (!provider) return disablePlay();
+      try{
+        const res = await provider.connect({ onlyIfTrusted:true });
+        if (res?.publicKey) enablePlay(res.publicKey.toString());
+        else disablePlay();
+      }catch{ disablePlay(); }
+    }
+
+    // Événements Phantom
     const provider = getProvider();
-    if (!provider) return disablePlay();
-    try{
-      const res = await provider.connect({ onlyIfTrusted:true });
-      if (res?.publicKey) enablePlay(res.publicKey.toString());
-      else disablePlay();
-    }catch{ disablePlay(); }
-  }
-
-  // Événements Phantom
-  const provider = getProvider();
-  if (provider) {
-    provider.on('accountChanged', (pubkey)=>{
-      if (pubkey) enablePlay(pubkey.toString());
-      else {
+    if (provider) {
+      provider.on('accountChanged', (pubkey)=>{
+        if (pubkey) enablePlay(pubkey.toString());
+        else {
+          localStorage.removeItem('flpy_wallet');
+          disablePlay();
+        }
+      });
+      provider.on('disconnect', ()=>{
         localStorage.removeItem('flpy_wallet');
         disablePlay();
-      }
+      });
+    }
+
+    // Resynchronisation quand on revient sur l’onglet/fenêtre
+    window.addEventListener('focus', tryAutoConnect);
+    document.addEventListener('visibilitychange', ()=>{
+      if (document.visibilityState === 'visible') tryAutoConnect();
     });
-    provider.on('disconnect', ()=>{
-      localStorage.removeItem('flpy_wallet');
-      disablePlay();
+
+    // Init UI
+    document.addEventListener('DOMContentLoaded', ()=>{
+      loadHighScore();
+      disablePlay();        // état sûr par défaut
+      tryAutoConnect();     // déverrouille si déjà approuvé côté Phantom
+      // ⚠️ on N'AFFICHE PAS un ancien wallet stocké tant que Phantom n’a pas confirmé
     });
-  }
 
-  // Resync quand on revient sur l’onglet
-  window.addEventListener('focus', tryAutoConnect);
-  document.addEventListener('visibilitychange', ()=>{
-    if (document.visibilityState === 'visible') tryAutoConnect();
-  });
-
-  // Init
-  document.addEventListener('DOMContentLoaded', ()=>{
-    loadHighScore();
-    disablePlay();      // état sûr par défaut
-    tryAutoConnect();   // déverrouille si déjà approuvé
-  });
-
-  // Bouton Connect
-  btnPhantom?.addEventListener('click', connectFlow);
-})();
-</script>
+    // Bouton Connect Phantom
+    btnPhantom?.addEventListener('click', connectFlow);
+  })();
+  </script>
 
   <!-- 🟡 Supabase leaderboard + realtime -->
   <script type="module">
