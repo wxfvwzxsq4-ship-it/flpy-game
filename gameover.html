@@ -52,34 +52,29 @@
   <footer>© FLPY — play responsibly</footer>
 </div>
 
-<!-- UI + local highscore -->
+<!-- Gestion du score local -->
 <script>
 (function(){
   const params = new URLSearchParams(window.location.search);
   const score = Number(params.get('score') || 0);
 
-  // Affiche le score
-  const elFinal = document.getElementById('final-score');
-  elFinal.textContent = String(score);
+  // Affiche le score final
+  document.getElementById('final-score').textContent = String(score);
 
-  // High score local
+  // Met à jour le highscore local
   const prev = Number(localStorage.getItem('flpy_highscore') || 0);
   if (score > prev) localStorage.setItem('flpy_highscore', String(score));
   const hs = Number(localStorage.getItem('flpy_highscore') || 0);
   document.getElementById('high-score').textContent = String(hs);
-
-  // (optionnel) Si pas de score dans l'URL, on pourrait renvoyer au jeu
-  // if (!params.has('score')) window.location.replace('./game.html');
-
-  document.getElementById('btn-again')?.addEventListener('click', (e)=>{
-    // par défaut, le lien suffit
-  });
 })();
 </script>
 
-<!-- Envoi sécurisé du score à l’Edge Function (avec Authorization) -->
+<!-- Envoi sécurisé du score à Supabase Edge Function -->
 <script>
-  const SUPABASE_FN_URL = "https://hnfmoxeomazaqenuqjsj.functions.supabase.co/functions/v1/smooth-service";
+  // ✅ URL de ta nouvelle Edge Function :
+  const SUPABASE_FN_URL = "https://hnfmoxeomazaqenuqjsj.supabase.co/functions/v1/bright-service";
+
+  // ✅ Clé publique ANON
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";
 
   async function postScore(wallet, score) {
@@ -88,32 +83,33 @@
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ wallet, score })
+        body: JSON.stringify({ wallet, score }),
       });
-      const json = await res.json().catch(()=> ({}));
+
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        console.warn("[postScore] refusé:", json);
+        console.warn("[postScore] Erreur serveur:", json);
       } else {
         console.log("[postScore] OK:", json);
       }
     } catch (e) {
-      console.error("[postScore] network error", e);
+      console.error("[postScore] Network error:", e);
     }
   }
 
-  // Envoie une seule fois par chargement de page
-  (function sendOnce(){
+  // Envoi automatique une seule fois à la fin de la partie
+  (function sendOnce() {
     const params = new URLSearchParams(location.search);
-    const score = Number(params.get('score') || 0);
-    if (!score) return;
+    const score = Number(params.get("score") || 0);
+    if (!score) return; // pas de score → ne rien envoyer
 
-    // petit garde-fou anti double-post si on recharge
-    if (sessionStorage.getItem('flpy_posted') === '1') return;
-    sessionStorage.setItem('flpy_posted', '1');
+    // Empêche un double envoi si on recharge la page
+    if (sessionStorage.getItem("flpy_posted") === "1") return;
+    sessionStorage.setItem("flpy_posted", "1");
 
-    const wallet = localStorage.getItem('flpy_wallet') || "guest";
+    const wallet = localStorage.getItem("flpy_wallet") || "guest";
     postScore(wallet, score);
   })();
 </script>
