@@ -169,4 +169,15 @@ function movebird(e){
 }
 function detectcollision(a,b){
     return a.x<b.x+b.width && a.x+a.width>b.x && a.y<b.y+b.height && a.y+a.height>b.y;
+
+}
+function saveHighScore(score){
+  const prev = Number(localStorage.getItem('flpy_highscore') || 0);
+  if (score > prev) localStorage.setItem('flpy_highscore', String(score));
+}
+
+function onGameOver(finalScore){
+  saveHighScore(finalScore);
+  // redirige vers la page de fin avec le score
+  window.location.href = 'gameover.html?score=' + encodeURIComponent(finalScore);
 }
