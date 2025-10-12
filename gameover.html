@@ -46,95 +46,158 @@
         <a class="btn btn-ghost" href="./index.html">🏠 Accueil</a>
         <a id="btn-again" class="btn btn-primary" href="./game.html">⟳ Recommencer</a>
       </div>
-
       <!-- 🎉 WORLD RECORD REWARD -->
-      <div id="wr-reward" style="display:none; margin-top:16px; padding:14px 14px;
-        border:1px solid rgba(255,255,255,.18); border-radius:12px; background:rgba(255,208,40,.10);">
-        <div style="font-weight:800; font-size:18px; margin-bottom:6px;">🎉 New WORLD RECORD!</div>
-        <div style="font-size:15px; line-height:1.5;">
-          You earned <b id="wr-amount">—</b> FLPY (<span id="wr-delta">Δ +0</span>).
-          <span id="wr-note" style="color:#d8def7"></span>
-        </div>
-        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
-          <button id="btn-claim" class="btn btn-primary">💰 Claim on Telegram</button>
-          <button id="btn-copy" class="btn btn-ghost">📋 Copy claim text</button>
-        </div>
-      </div>
+<div id="wr-reward" style="display:none; margin-top:16px; padding:14px 14px;
+  border:1px solid rgba(255,255,255,.18); border-radius:12px; background:rgba(255,208,40,.10);">
+  <div style="font-weight:800; font-size:18px; margin-bottom:6px;">🎉 New WORLD RECORD!</div>
+  <div style="font-size:15px; line-height:1.5;">
+    You earned <b id="wr-amount">—</b> FLPY (<span id="wr-delta">Δ +0</span>).
+    <span id="wr-note" style="color:#d8def7"></span>
+  </div>
+  <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+    <button id="btn-claim" class="btn btn-primary">💰 Claim on Telegram</button>
+    <button id="btn-copy" class="btn btn-ghost">📋 Copy claim text</button>
+  </div>
+</div>
+      <button id="btn-reward" class="btn btn-ghost">💰 Demander ma récompense</button>
+<p id="reward-status" style="margin-top:10px; color:#cfd7f3; font-size:14px;"></p>
     </div>
   </main>
 
   <footer>© FLPY — play responsibly</footer>
 </div>
 
-<!-- Score handling + local storage -->
+<!-- Gestion du score local -->
 <script>
 (function(){
   const params = new URLSearchParams(window.location.search);
   const score = Number(params.get('score') || 0);
 
-  const elFinal = document.getElementById('final-score');
-  elFinal.textContent = String(score);
+  // Affiche le score final
+  document.getElementById('final-score').textContent = String(score);
 
+  // Met à jour le highscore local
   const prev = Number(localStorage.getItem('flpy_highscore') || 0);
   if (score > prev) localStorage.setItem('flpy_highscore', String(score));
   const hs = Number(localStorage.getItem('flpy_highscore') || 0);
   document.getElementById('high-score').textContent = String(hs);
-
-  if (!params.has('score')) {
-    // window.location.replace('./game.html');
-  }
-
-  document.getElementById('btn-again')?.addEventListener('click', (e)=>{
-    // Par défaut le lien suffit.
-  });
 })();
 </script>
 
-<!-- Envoi du score vers Supabase -->
-<script type="module">
+<!-- Envoi sécurisé du score à Supabase Edge Function -->
+<script>
+  // ✅ URL de ta nouvelle Edge Function :
+  const SUPABASE_FN_URL = "https://hnfmoxeomazaqenuqjsj.supabase.co/functions/v1/bright-service";
+
+  // ✅ Clé publique ANON
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";
+
+  async function postScore(wallet, score) {
+    try {
+      const res = await fetch(SUPABASE_FN_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ wallet, score }),
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.warn("[postScore] Erreur serveur:", json);
+      } else {
+        console.log("[postScore] OK:", json);
+      }
+    } catch (e) {
+      console.error("[postScore] Network error:", e);
+    }
+  }
+
+  // Envoi automatique une seule fois à la fin de la partie
+  (function sendOnce() {
+    const params = new URLSearchParams(location.search);
+    const score = Number(params.get("score") || 0);
+    if (!score) return; // pas de score → ne rien envoyer
+
+    // Empêche un double envoi si on recharge la page
+    if (sessionStorage.getItem("flpy_posted") === "1") return;
+    sessionStorage.setItem("flpy_posted", "1");
+
+    const wallet = localStorage.getItem("flpy_wallet") || "guest";
+    postScore(wallet, score);
+  })();
+</script>
+  <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const SUPABASE_URL = "https://hnfmoxeomazaqenuqjsj.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-(async function pushScore(){
+const btnReward = document.getElementById("btn-reward");
+const statusText = document.getElementById("reward-status");
+
+btnReward?.addEventListener("click", async () => {
+  const wallet = localStorage.getItem("flpy_wallet");
   const params = new URLSearchParams(location.search);
-  const score = Number(params.get('score') || 0);
-  if (!score) return;
-  const wallet = localStorage.getItem('flpy_wallet') || null;
-  try {
-    await supabase.from('scores').insert({ wallet, score });
-  } catch (e) {
-    console.warn('Insert score failed', e);
-  }
-})();
-</script>
+  const score = Number(params.get("score") || 0);
 
-<!-- 🟡 Détection du World Record + Reward System -->
-<script type="module">
+  if (!wallet) {
+    statusText.textContent = "❌ Connecte ton wallet Phantom pour demander ta récompense.";
+    return;
+  }
+  if (!score || score <= 0) {
+    statusText.textContent = "❌ Score invalide.";
+    return;
+  }
+
+  btnReward.disabled = true;
+  btnReward.textContent = "⏳ Envoi de la demande...";
+  statusText.textContent = "";
+
+  const { error } = await supabase
+    .from("reward_requests")
+    .insert({ wallet, score });
+
+  if (error) {
+    console.error(error);
+    statusText.textContent = "⚠️ Erreur lors de l'enregistrement.";
+  } else {
+    statusText.textContent = "✅ Demande envoyée ! Tu recevras ta récompense sous peu.";
+  }
+
+  btnReward.textContent = "💰 Demande envoyée";
+});
+</script>
+  <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// 🔧 Supabase
 const SUPABASE_URL = "https://hnfmoxeomazaqenuqjsj.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// 🔗 Ton groupe Telegram
 const TELEGRAM_GROUP_URL = "https://t.me/+hZGqh1DHN6w1MWE8";
 
-// Barème de récompense
+// 🔢 Barème de récompense (Δ = nouveau WR - ancien WR)
 function payoutForDelta(delta) {
   if (delta >= 21) return 20000;
   if (delta >= 11) return 10000;
   if (delta >= 6)  return 5000;
   if (delta >= 3)  return 2500;
-  if (delta >= 0)  return 1000;
+  if (delta >= 0)  return 1000; // record battu de 0–2
   return 0;
 }
 
+// 📊 Détecte si la run actuelle est le WR (via events) et calcule la reward
 async function detectWRAndShow() {
   const params = new URLSearchParams(location.search);
   const finalScore = Number(params.get("score") || 0);
   if (!finalScore) return;
 
+  // On regarde les 2 derniers events WORLD_RECORD
   const { data: evts, error } = await supabase
     .from("events")
     .select("wallet, score, created_at")
@@ -142,18 +205,22 @@ async function detectWRAndShow() {
     .order("created_at", { ascending: false })
     .limit(2);
 
-  if (error || !evts?.length) return;
-  const latest = evts[0];
-  const prev = evts[1] || { score: 0 };
+  if (error || !evts || evts.length === 0) return;
 
+  const latest = evts[0];
+  const prev   = evts[1] || null;
+
+  // Si le dernier WR correspond à notre score, on affiche la récompense
   const isThisRunWR = (latest.score === finalScore);
   if (!isThisRunWR) return;
 
-  const delta = Math.max(0, latest.score - prev.score);
+  const previousScore = prev ? prev.score : 0;
+  const delta = Math.max(0, latest.score - previousScore);
   const reward = payoutForDelta(delta);
+
   if (reward <= 0) return;
 
-  const wallet = localStorage.getItem("flpy_wallet") || "guest";
+  // UI
   const $wrap   = document.getElementById("wr-reward");
   const $amount = document.getElementById("wr-amount");
   const $delta  = document.getElementById("wr-delta");
@@ -161,10 +228,12 @@ async function detectWRAndShow() {
   const $claim  = document.getElementById("btn-claim");
   const $copy   = document.getElementById("btn-copy");
 
+  const wallet  = localStorage.getItem("flpy_wallet") || "guest";
+
   $amount.textContent = reward.toLocaleString();
   $delta.textContent  = `Δ +${delta}`;
   $note.textContent   = wallet === "guest"
-    ? " (tip: connect a wallet next time to link rewards)"
+    ? " (tip: connect a wallet next time to link rewards to your address)"
     : ` · Wallet: ${wallet.slice(0,4)}…${wallet.slice(-4)}`;
 
   const claimText = `WR Claim — FLPY
@@ -172,12 +241,12 @@ Score: ${finalScore} (Δ +${delta})
 Reward: ${reward} FLPY
 Wallet: ${wallet}
 Timestamp: ${new Date().toISOString()}
-Please verify and send.`;
+Please verify and send. Thank you!`;
 
   async function copyClaim() {
     try {
       await navigator.clipboard.writeText(claimText);
-      alert("Claim text copied. Paste it in Telegram.");
+      alert("Claim text copied to clipboard. Paste it in Telegram.");
     } catch {
       prompt("Copy this claim text:", claimText);
     }
@@ -187,6 +256,7 @@ Please verify and send.`;
     await copyClaim();
     window.open(TELEGRAM_GROUP_URL, "_blank", "noopener");
   });
+
   $copy.addEventListener("click", copyClaim);
 
   $wrap.style.display = "block";
