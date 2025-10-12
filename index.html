@@ -91,7 +91,7 @@
       gap:16px;
       justify-content:center;
       flex-wrap:wrap;
-      margin-bottom:16px;
+      margin-bottom:26px; /* léger espace avant le GIF */
     }
 
     .btn{
@@ -117,6 +117,29 @@
       background:rgba(255,255,255,.12);
       color:var(--fg);
       border:1px solid rgba(255,255,255,.25);
+    }
+
+    /* --- Bannière GIF centrée sous les boutons --- */
+    .promo{
+      margin: 0 auto 20px;
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .promo img{
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      image-rendering: pixelated;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    @media (max-width: 640px){
+      .promo img{ width: 100%; }
     }
 
     .grid{
@@ -151,27 +174,6 @@
       from { filter: brightness(1); }
       to { filter: brightness(1.07); }
     }
-
-    /* --- Bannière GIF sous le bouton --- */
-    .promo{
-      margin: 18px auto 0;
-      width: 100%;
-      max-width: 980px;
-      display: flex;
-      justify-content: flex-start; /* alignée à gauche */
-    }
-    .promo img{
-      width: min(100%, 720px);
-      height: auto;
-      border-radius: 12px;
-      image-rendering: pixelated;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      border: 1px solid rgba(255,255,255,.08);
-    }
-    @media (max-width: 640px){
-      .promo{ justify-content: center; }
-      .promo img{ width: 100%; }
-    }
   </style>
 </head>
 
@@ -193,9 +195,11 @@
       <div class="actions">
         <a class="btn btn-play" href="./game.html">▶ Play FLPY</a>
         <a class="btn btn-ghost" href="https://pump.fun" target="_blank" rel="noopener">View on Pump.fun</a>
+        <!-- Bouton Connect Phantom (optionnel) -->
+        <!-- <button id="btn-phantom" class="btn btn-ghost" type="button">Connect Phantom</button> -->
       </div>
 
-      <!-- 🎮 Bannière GIF sous les boutons -->
+      <!-- 🎮 Bannière GIF centrée sous les boutons -->
       <div class="promo">
         <img src="./flpy.gif" alt="FLPY gameplay banner" loading="lazy" />
       </div>
