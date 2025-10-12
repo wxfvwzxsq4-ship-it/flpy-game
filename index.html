@@ -144,10 +144,10 @@
 
       <div class="grid">
         <div class="card" id="lb-global">
-  <h3>Leaderboard — Top 10</h3>
-  <ol id="lb-list" style="text-align:left; margin-top:8px;"></ol>
-  <div id="lb-you" style="margin-top:10px; font-size:14px; color:#cfd7f3;"></div>
-</div>
+          <h3>Leaderboard — Top 10</h3>
+          <ol id="lb-list" style="text-align:left; margin-top:8px;"></ol>
+          <div id="lb-you" style="margin-top:10px; font-size:14px; color:#cfd7f3;"></div>
+        </div>
         <div class="card"><h3>Record Events</h3><p>When someone sets a world record, a site-wide celebration triggers.</p></div>
         <div class="card"><h3>Community</h3><p>Join the Telegram to share clips, scores, and feedback.</p></div>
       </div>
@@ -168,7 +168,6 @@
 
     // ----- High Score (localStorage) -----
     function loadHighScore(){
-      // Le jeu doit écrire localStorage.setItem('flpy_highscore', score)
       const hs = localStorage.getItem('flpy_highscore');
       elHS.textContent = (hs !== null && hs !== undefined) ? hs : '—';
     }
@@ -260,70 +259,101 @@
     });
   })();
   </script>
+
+  <!-- Leaderboard: meilleur score par wallet -->
   <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+  // Si besoin, alternative sans adblock : 
+  // import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-  const SUPABASE_URL = "https://hnfmoxeomazaqenuqjsj.supabase.co";   // ← remplace
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";                  // ← remplace
+  const SUPABASE_URL = "https://hnfmoxeomazaqenuqjsj.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const list = document.getElementById('lb-list');
-  const you  = document.getElementById('lb-you');
-
+  const list  = document.getElementById('lb-list');
+  const you   = document.getElementById('lb-you');
   const short = (w) => w ? w.slice(0,4) + '…' + w.slice(-4) : 'guest';
 
-  async function loadTop10() {
+  // Charge le Top 10 : meilleur score par wallet
+  async function loadTop10BestByWallet() {
     if (!list) return;
     list.innerHTML = "<li>Loading…</li>";
 
-    const { data, error } = await supabase
-      .from('scores')
-      .select('wallet, score, created_at')
-      .order('score', { ascending: false })
-      .limit(10);
+    // 1) Essaye la vue best_by_wallet
+    let top = null;
+    let topErr = null;
+    try {
+      const resp = await supabase
+        .from("best_by_wallet")
+        .select("wallet, best_score")
+        .order("best_score", { ascending: false })
+        .limit(10);
+      top = resp.data;
+      topErr = resp.error || null;
+    } catch (e) {
+      topErr = e;
+    }
 
-    if (error) {
-      list.innerHTML = "<li>Cannot load leaderboard.</li>";
+    // 2) Fallback: si la vue n'existe pas encore, afficher depuis scores bruts (moins propre)
+    if (topErr) {
+      console.warn("[FLPY] best_by_wallet unavailable, fallback to scores:", topErr);
+      const resp2 = await supabase
+        .from("scores")
+        .select("wallet, score")
+        .order("score", { ascending: false })
+        .limit(10);
+      if (resp2.error) {
+        list.innerHTML = "<li>Cannot load leaderboard.</li>";
+        return;
+      }
+      list.innerHTML = (resp2.data && resp2.data.length)
+        ? resp2.data.map((r,i)=>`<li>#${i+1} — <b>${r.score}</b> pts · ${short(r.wallet)}</li>`).join("")
+        : "<li>No scores yet. Be the first!</li>";
       return;
     }
 
-    list.innerHTML = data.map((r, i) =>
-      `<li>#${i+1} — <b>${r.score}</b> pts · ${short(r.wallet)}</li>`
-    ).join("");
-
-    // Ta position (approx) si connecté
-    const wallet = localStorage.getItem('flpy_wallet');
-    if (you && wallet) {
-      // On calcule un rang approximatif : nombre de scores >= ton meilleur score
-      const myBest = Number(localStorage.getItem('flpy_highscore') || 0);
-      if (myBest > 0) {
-        const { data: cntData, error: cntErr } = await supabase
-          .from('scores')
-          .select('score', { count: 'exact', head: true })
-          .gte('score', myBest);
-
-        const rank = !cntErr && cntData === null && typeof cntErr === 'object'
-          ? null
-          : (cntErr ? null : (cntErr ?? false));
-
-        // Petite subtilité Supabase head:true : le "count" est disponible via .count (SDK)
-        const { count } = await supabase
-          .from('scores')
-          .select('score', { count: 'exact', head: true })
-          .gte('score', myBest);
-
-        if (typeof count === 'number') {
-          you.innerHTML = `Your best: <b>${myBest}</b> pts · Approx. rank: <b>#${count}</b> (${short(wallet)})`;
-        } else {
-          you.innerHTML = `Your best: <b>${myBest}</b> pts (${short(wallet)})`;
-        }
-      } else {
-        you.textContent = `Connect & play to appear here.`;
-      }
-    }
+    // 3) Rendu normal (vue best_by_wallet)
+    list.innerHTML = (top && top.length)
+      ? top.map((r,i)=>`<li>#${i+1} — <b>${r.best_score}</b> pts · ${short(r.wallet)}</li>`).join("")
+      : "<li>No scores yet. Be the first!</li>";
   }
 
-  loadTop10();
-</script>
+  // Calcule le rang du joueur connecté en fonction de la vue best_by_wallet
+  async function showMyRankBestByWallet() {
+    const wallet = localStorage.getItem("flpy_wallet");
+    const myBest = Number(localStorage.getItem("flpy_highscore") || 0);
+    if (!you || !wallet || myBest <= 0) return;
+
+    // Compte les wallets ayant un best_score STRICTEMENT supérieur
+    let higher = 0;
+
+    try {
+      const { count, error } = await supabase
+        .from("best_by_wallet")
+        .select("wallet", { head: true, count: "exact" })
+        .gt("best_score", myBest);
+
+      if (!error && typeof count === "number") {
+        higher = count;
+      } else {
+        // Fallback si count ne marche pas (certains environnements)
+        const { data: rows, error: e2 } = await supabase
+          .from("best_by_wallet")
+          .select("wallet")
+          .gt("best_score", myBest);
+        if (!e2 && Array.isArray(rows)) higher = rows.length;
+      }
+    } catch (e) {
+      console.warn("[FLPY] rank query failed:", e);
+    }
+
+    const rank = (higher || 0) + 1; // 0 au-dessus → rang #1
+    you.innerHTML = `Your best: <b>${myBest}</b> pts · Approx. rank: <b>#${rank}</b> (${short(wallet)})`;
+  }
+
+  // Init
+  loadTop10BestByWallet();
+  showMyRankBestByWallet();
+  </script>
 </body>
 </html>
