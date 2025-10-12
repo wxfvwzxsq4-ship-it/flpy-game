@@ -158,7 +158,7 @@
 
   <footer>© FLPY — play responsibly · built for fun</footer>
 
-  <!-- ✅ Script Phantom avec surveillance de déconnexion -->
+  <!-- ✅ Script Phantom fiable -->
 <script>
 (function(){
   const btnPlay    = document.getElementById('btn-play');
@@ -177,46 +177,6 @@
     return (window.solana?.isPhantom) ? window.solana : null;
   }
 
-  function disablePlay(){
-    btnPlay.classList.add('is-disabled');
-    btnPlay.setAttribute('aria-disabled','true');
-    btnPlay.tabIndex = -1;
-    btnPlay.onclick = (e)=>{ e.preventDefault(); connectFlow(); };
-    elWallet.textContent = 'not connected';
-    btnPhantom.textContent = 'Connect Phantom';
-    sessionStorage.removeItem('flpy_wallet'); // <- pas de cache persistant si déconnecté
-  }
-
-  function enablePlay(address){
-    btnPlay.classList.remove('is-disabled');
-    btnPlay.setAttribute('aria-disabled','false');
-    btnPlay.tabIndex = 0;
-    btnPlay.textContent = '▶ Play FLPY';
-
-    // Toujours revalider la session juste avant de jouer
-    btnPlay.onclick = async (e) => {
-      e.preventDefault();
-      const provider = getProvider();
-      if (!provider) return disablePlay();
-
-      try {
-        // essaie silencieuse: si déconnecté, pas de clé -> on invite à se reconnecter
-        const res = await provider.connect({ onlyIfTrusted:true });
-        if (res?.publicKey) {
-          window.location.href = './game.html';
-        } else {
-          await connectFlow();
-        }
-      } catch {
-        await connectFlow();
-      }
-    };
-
-    elWallet.textContent = short(address);
-    btnPhantom.textContent = 'Connected: ' + short(address);
-    sessionStorage.setItem('flpy_wallet', address); // cache session (pas local)
-  }
-
   async function connectFlow(){
     const provider = getProvider();
     if (!provider) {
@@ -225,12 +185,44 @@
       return;
     }
     try{
-      const res = await provider.connect();      // demande explicite
+      const res = await provider.connect();
       if (res?.publicKey) enablePlay(res.publicKey.toString());
-      else disablePlay();
-    }catch{
-      disablePlay();
+    }catch(e){
+      console.warn('Phantom connect refused/failed', e);
     }
+  }
+
+  function disablePlay(){
+    btnPlay.classList.add('is-disabled');
+    btnPlay.setAttribute('aria-disabled','true');
+    btnPlay.tabIndex = -1;
+    btnPlay.onclick = (e)=>{ e.preventDefault(); connectFlow(); };
+    elWallet.textContent = 'not connected';
+    btnPhantom.textContent = 'Connect Phantom';
+  }
+
+  function enablePlay(address){
+    btnPlay.classList.remove('is-disabled');
+    btnPlay.setAttribute('aria-disabled','false');
+    btnPlay.tabIndex = 0;
+    btnPlay.textContent = '▶ Play FLPY';
+
+    btnPlay.onclick = async (e) => {
+      e.preventDefault();
+      const provider = getProvider();
+      if (!provider) return connectFlow();
+      try {
+        const res = await provider.connect({ onlyIfTrusted:true });
+        if (res?.publicKey) window.location.href = './game.html';
+        else await connectFlow();
+      } catch {
+        await connectFlow();
+      }
+    };
+
+    elWallet.textContent = short(address);
+    btnPhantom.textContent = 'Connected: ' + short(address);  // 👈 plus de parenthèse en trop
+    localStorage.setItem('flpy_wallet', address);
   }
 
   async function tryAutoConnect(){
@@ -243,34 +235,23 @@
     }catch{ disablePlay(); }
   }
 
-  // 🔁 Surveillance douce de l’état Phantom (déconnexion depuis l’extension)
-  let lastPk = null;
-  function tickPhantomState(){
-    const provider = getProvider();
-    const pk = provider?.publicKey ? provider.publicKey.toString() : null;
-    if (pk !== lastPk) {
-      lastPk = pk;
-      if (pk) enablePlay(pk); else disablePlay();
-    }
-  }
-  const monitor = setInterval(tickPhantomState, 1500);
-
-  // Événements Phantom (si l’extension les envoie, on réagit instantanément)
+  // Événements Phantom
   const provider = getProvider();
   if (provider) {
     provider.on('accountChanged', (pubkey)=>{
       if (pubkey) enablePlay(pubkey.toString());
-      else disablePlay();
+      else {
+        localStorage.removeItem('flpy_wallet');
+        disablePlay();
+      }
     });
     provider.on('disconnect', ()=>{
+      localStorage.removeItem('flpy_wallet');
       disablePlay();
-    });
-    provider.on('connect', (pubkey)=>{
-      if (pubkey) enablePlay(pubkey.toString());
     });
   }
 
-  // Resync quand l’onglet redevient actif
+  // Resync quand on revient sur l’onglet
   window.addEventListener('focus', tryAutoConnect);
   document.addEventListener('visibilitychange', ()=>{
     if (document.visibilityState === 'visible') tryAutoConnect();
