@@ -318,22 +318,7 @@ if (you && wallet && myBest > 0) {
   you.innerHTML = `Your best: <b>${myBest}</b> pts · Approx. rank: <b>#${rank}</b> (${short(wallet)})`;
 }
 
-        // Petite subtilité Supabase head:true : le "count" est disponible via .count (SDK)
-        const { count } = await supabase
-          .from('scores')
-          .select('score', { count: 'exact', head: true })
-          .gte('score', myBest);
 
-        if (typeof count === 'number') {
-          you.innerHTML = `Your best: <b>${myBest}</b> pts · Approx. rank: <b>#${count}</b> (${short(wallet)})`;
-        } else {
-          you.innerHTML = `Your best: <b>${myBest}</b> pts (${short(wallet)})`;
-        }
-      } else {
-        you.textContent = `Connect & play to appear here.`;
-      }
-    }
-  }
 
   loadTop10();
 </script>
