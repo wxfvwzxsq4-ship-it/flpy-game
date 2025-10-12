@@ -145,6 +145,12 @@
       <div class="grid">
         <div class="card" id="lb-global">
           <h3>Leaderboard — Top 10</h3>
+
+          <!-- 🟡 2.1 Bannière WORLD RECORD -->
+          <div id="record-banner" style="display:none; margin:8px 0 6px; padding:8px 12px; border:1px solid rgba(255,255,255,.2); border-radius:10px; background:rgba(255,208,40,.12); font-weight:700;">
+            🔥 New world record: <span id="record-score">—</span> pts · <span id="record-wallet">—</span>
+          </div>
+
           <ol id="lb-list" style="text-align:left; margin-top:8px;"></ol>
           <div id="lb-you" style="margin-top:10px; font-size:14px; color:#cfd7f3;"></div>
         </div>
@@ -166,13 +172,13 @@
 
     const short = (addr) => addr ? addr.slice(0,4) + '...' + addr.slice(-4) : 'not connected';
 
-    // ----- High Score (localStorage) -----
+    // High Score (local)
     function loadHighScore(){
       const hs = localStorage.getItem('flpy_highscore');
       elHS.textContent = (hs !== null && hs !== undefined) ? hs : '—';
     }
 
-    // ----- Phantom -----
+    // Phantom
     function getProvider(){
       if ('solana' in window) {
         const provider = window.solana;
@@ -252,108 +258,167 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       loadHighScore();
-      disablePlay();      // par défaut
-      tryAutoConnect();   // déverrouille si déjà approuvé
+      disablePlay();
+      tryAutoConnect();
       const saved = localStorage.getItem('flpy_wallet');
       if (saved) elWallet.textContent = short(saved);
     });
   })();
   </script>
 
-  <!-- Leaderboard: meilleur score par wallet -->
+  <!-- 🟡 2.2 Script Supabase : Top 10 best_by_wallet + dernier record + Realtime -->
   <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-  // Si besoin, alternative sans adblock : 
-  // import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  // Alternative CDN : https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm
 
   const SUPABASE_URL = "https://hnfmoxeomazaqenuqjsj.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const list  = document.getElementById('lb-list');
-  const you   = document.getElementById('lb-you');
+  const list   = document.getElementById('lb-list');
+  const you    = document.getElementById('lb-you');
+  const banner = document.getElementById('record-banner');
+  const recS   = document.getElementById('record-score');
+  const recW   = document.getElementById('record-wallet');
+
   const short = (w) => w ? w.slice(0,4) + '…' + w.slice(-4) : 'guest';
 
-  // Charge le Top 10 : meilleur score par wallet
+  // ---------- TOP 10 : meilleur score par wallet ----------
   async function loadTop10BestByWallet() {
     if (!list) return;
     list.innerHTML = "<li>Loading…</li>";
 
-    // 1) Essaye la vue best_by_wallet
-    let top = null;
-    let topErr = null;
+    // Essaie la vue; fallback si absente
+    let top = null, topErr = null;
     try {
-      const resp = await supabase
+      const { data, error } = await supabase
         .from("best_by_wallet")
         .select("wallet, best_score")
         .order("best_score", { ascending: false })
         .limit(10);
-      top = resp.data;
-      topErr = resp.error || null;
-    } catch (e) {
-      topErr = e;
-    }
+      top = data; topErr = error || null;
+    } catch (e) { topErr = e; }
 
-    // 2) Fallback: si la vue n'existe pas encore, afficher depuis scores bruts (moins propre)
     if (topErr) {
-      console.warn("[FLPY] best_by_wallet unavailable, fallback to scores:", topErr);
-      const resp2 = await supabase
+      const { data, error } = await supabase
         .from("scores")
         .select("wallet, score")
         .order("score", { ascending: false })
         .limit(10);
-      if (resp2.error) {
-        list.innerHTML = "<li>Cannot load leaderboard.</li>";
-        return;
-      }
-      list.innerHTML = (resp2.data && resp2.data.length)
-        ? resp2.data.map((r,i)=>`<li>#${i+1} — <b>${r.score}</b> pts · ${short(r.wallet)}</li>`).join("")
+      if (error) { list.innerHTML = "<li>Cannot load leaderboard.</li>"; return; }
+      list.innerHTML = (data?.length)
+        ? data.map((r,i)=>`<li>#${i+1} — <b>${r.score}</b> pts · ${short(r.wallet)}</li>`).join("")
         : "<li>No scores yet. Be the first!</li>";
       return;
     }
 
-    // 3) Rendu normal (vue best_by_wallet)
     list.innerHTML = (top && top.length)
       ? top.map((r,i)=>`<li>#${i+1} — <b>${r.best_score}</b> pts · ${short(r.wallet)}</li>`).join("")
       : "<li>No scores yet. Be the first!</li>";
   }
 
-  // Calcule le rang du joueur connecté en fonction de la vue best_by_wallet
+  // ---------- Rang perso basé sur best_by_wallet ----------
   async function showMyRankBestByWallet() {
     const wallet = localStorage.getItem("flpy_wallet");
     const myBest = Number(localStorage.getItem("flpy_highscore") || 0);
     if (!you || !wallet || myBest <= 0) return;
 
-    // Compte les wallets ayant un best_score STRICTEMENT supérieur
     let higher = 0;
-
     try {
       const { count, error } = await supabase
         .from("best_by_wallet")
         .select("wallet", { head: true, count: "exact" })
         .gt("best_score", myBest);
-
-      if (!error && typeof count === "number") {
-        higher = count;
-      } else {
-        // Fallback si count ne marche pas (certains environnements)
+      if (!error && typeof count === "number") higher = count;
+      else {
         const { data: rows, error: e2 } = await supabase
           .from("best_by_wallet")
           .select("wallet")
           .gt("best_score", myBest);
         if (!e2 && Array.isArray(rows)) higher = rows.length;
       }
-    } catch (e) {
-      console.warn("[FLPY] rank query failed:", e);
-    }
-
-    const rank = (higher || 0) + 1; // 0 au-dessus → rang #1
+    } catch {}
+    const rank = (higher || 0) + 1;
     you.innerHTML = `Your best: <b>${myBest}</b> pts · Approx. rank: <b>#${rank}</b> (${short(wallet)})`;
+  }
+
+  // ---------- Bannière + confettis ----------
+  function showBanner(score, wallet) {
+    if (!banner) return;
+    recS.textContent = String(score);
+    recW.textContent = short(wallet);
+    banner.style.display = 'block';
+    banner.animate([{transform:'scale(1)'},{transform:'scale(1.02)'},{transform:'scale(1)'}], {duration:600, iterations:1});
+  }
+
+  function confettiOnce() {
+    const n = 60;
+    const container = document.createElement('div');
+    Object.assign(container.style, {
+      position:'fixed', left:0, top:0, width:'100%', height:'0',
+      overflow:'visible', pointerEvents:'none', zIndex:9999
+    });
+    for (let i=0; i<n; i++){
+      const d = document.createElement('div');
+      const size = 6 + Math.random()*6;
+      d.style.position='absolute';
+      d.style.left = Math.random()*100 + 'vw';
+      d.style.top  = '-10px';
+      d.style.width = size+'px';
+      d.style.height= size+'px';
+      d.style.borderRadius='50%';
+      d.style.background = `hsl(${Math.floor(Math.random()*360)}, 90%, 60%)`;
+      d.style.opacity='0.9';
+      d.animate(
+        [{ transform:'translateY(0)', opacity:1 },
+         { transform:`translateY(${100 + Math.random()*20}vh)`, opacity:0.8 }],
+        { duration: 1200 + Math.random()*400, easing:'ease-out', fill:'forwards' }
+      );
+      container.appendChild(d);
+    }
+    document.body.appendChild(container);
+    setTimeout(()=>container.remove(), 1800);
+  }
+
+  function showCelebration(score, wallet, { silent=false } = {}) {
+    showBanner(score, wallet);
+    if (!silent) confettiOnce();
+  }
+
+  // ---------- Dernier record au chargement ----------
+  async function loadLatestRecord() {
+    const { data, error } = await supabase
+      .from("events")
+      .select("wallet, score, created_at")
+      .eq("type", "WORLD_RECORD")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (!error && data?.length) {
+      showCelebration(data[0].score, data[0].wallet, { silent: true });
+    }
+  }
+
+  // ---------- Realtime : nouveau WORLD_RECORD ----------
+  function subscribeRecordEvents(){
+    supabase.channel('events-stream')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'events',
+        filter: 'type=eq.WORLD_RECORD'
+      }, (payload) => {
+        const { score, wallet } = payload.new;
+        showCelebration(score, wallet);
+        loadTop10BestByWallet(); // rafraîchir le Top 10
+      })
+      .subscribe((status)=>console.log('[Realtime]', status));
   }
 
   // Init
   loadTop10BestByWallet();
   showMyRankBestByWallet();
+  loadLatestRecord();
+  subscribeRecordEvents();
   </script>
 </body>
 </html>
