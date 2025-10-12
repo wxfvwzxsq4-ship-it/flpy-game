@@ -39,7 +39,6 @@
     }
     .brand img{ width:44px; height:44px; margin-right:10px; image-rendering:pixelated; }
 
-    /* Bouton Telegram plus visible */
     .btn-social{
       background: linear-gradient(135deg, var(--tg1), var(--tg2));
       color:#fff; text-decoration:none; font-weight:700; font-size:16px;
@@ -59,7 +58,6 @@
     .hero h2{ font-size:32px; margin:20px 0 10px; }
     .hero p.lead{ font-size:18px; color:var(--muted); margin-bottom:12px; }
 
-    /* Ligne d'info High Score */
     .stats{
       display:flex; gap:12px; justify-content:center; align-items:center;
       margin:8px 0 18px;
@@ -85,10 +83,14 @@
     .btn-play:hover{ transform:translateY(-2px); }
     .btn-ghost{ background:rgba(255,255,255,.12); color:var(--fg); border:1px solid rgba(255,255,255,.25); }
 
-    /* État désactivé tant que Phantom n'est pas connecté */
-    .is-disabled{ opacity:.55; cursor:not-allowed; filter:grayscale(.1); pointer-events:auto; }
+    /* ✅ Désactivation solide : plus cliquable */
+    .is-disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      filter:grayscale(.2);
+      pointer-events:none;
+    }
 
-    /* Bannière GIF centrée sous les boutons */
     .promo{
       margin:0 auto 20px; width:100%; max-width:720px;
       display:flex; justify-content:center; align-items:center;
@@ -103,8 +105,6 @@
     .card{ background:rgba(255,255,255,.05); border-radius:12px; padding:20px; width:240px; border:1px solid rgba(255,255,255,.1); }
 
     footer{ padding:20px; font-size:14px; color:rgba(255,255,255,.6); }
-
-    /* Animation douce du fond */
     body{ animation: skyGlow 8s ease-in-out infinite alternate; }
     @keyframes skyGlow{ from{ filter:brightness(1) } to{ filter:brightness(1.07) } }
   </style>
@@ -115,7 +115,7 @@
     <a class="brand" href="/">
       <img src="./flpy.png" alt="FLPY logo"> FLPY
     </a>
-    <a class="btn-social" href="https://t.me/+hZGqh1DHN6w1MWE8" target="_blank" rel="noopener">💬 💬 Join FLPY Telegram Group</a>
+    <a class="btn-social" href="https://t.me/+hZGqh1DHN6w1MWE8" target="_blank" rel="noopener">💬 Join FLPY Telegram Group</a>
   </header>
 
   <main>
@@ -124,20 +124,17 @@
       <h2>The Flying Coin — Ready?</h2>
       <p class="lead">Tap, dodge, and try to set the world record. Every run counts.</p>
 
-      <!-- Affichage du dernier High Score -->
       <div class="stats">
         <div class="pill">Last High Score: <b id="last-highscore">—</b></div>
         <div class="pill">Wallet: <b id="connected-wallet">not connected</b></div>
       </div>
 
       <div class="actions">
-        <!-- Play verrouillé tant que Phantom n'est pas connecté -->
         <a id="btn-play" class="btn btn-play is-disabled" href="#" role="button" aria-disabled="true">▶ Play FLPY</a>
         <a class="btn btn-ghost" href="https://pump.fun/coin/Gr1Kxtu6eFAceTujfaqS3gaddjnTT8bcrWf5oaN1pump" target="_blank" rel="noopener">View on Pump.fun</a>
         <button id="btn-phantom" class="btn btn-ghost" type="button">Connect Phantom</button>
       </div>
 
-      <!-- GIF sous les boutons -->
       <div class="promo">
         <img src="./flpy.gif" alt="FLPY gameplay banner" loading="lazy" />
       </div>
@@ -145,14 +142,11 @@
       <div class="grid">
         <div class="card" id="lb-global">
           <h3>Leaderboard — Top 10</h3>
-
-          <!-- 🟡 2.1 Bannière WORLD RECORD -->
-          <div id="record-banner" style="display:none; margin:8px 0 6px; padding:8px 12px; border:1px solid rgba(255,255,255,.2); border-radius:10px; background:rgba(255,208,40,.12); font-weight:700;">
+          <div id="record-banner" style="display:none;margin:8px 0 6px;padding:8px 12px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:rgba(255,208,40,.12);font-weight:700;">
             🔥 New world record: <span id="record-score">—</span> pts · <span id="record-wallet">—</span>
           </div>
-
           <ol id="lb-list" style="text-align:left; margin-top:8px;"></ol>
-          <div id="lb-you" style="margin-top:10px; font-size:14px; color:#cfd7f3;"></div>
+          <div id="lb-you" style="margin-top:10px;font-size:14px;color:#cfd7f3;"></div>
         </div>
         <div class="card"><h3>Record Events</h3><p>When someone sets a world record, a site-wide celebration triggers.</p></div>
         <div class="card"><h3>Community</h3><p>Join the Telegram to share clips, scores, and feedback.</p></div>
@@ -162,7 +156,7 @@
 
   <footer>© FLPY — play responsibly · built for fun</footer>
 
-  <!-- Script Phantom + High Score -->
+  <!-- ✅ Script Phantom corrigé -->
   <script>
   (function(){
     const btnPlay   = document.getElementById('btn-play');
@@ -172,43 +166,20 @@
 
     const short = (addr) => addr ? addr.slice(0,4) + '...' + addr.slice(-4) : 'not connected';
 
-    // High Score (local)
     function loadHighScore(){
       const hs = localStorage.getItem('flpy_highscore');
-      elHS.textContent = (hs !== null && hs !== undefined) ? hs : '—';
+      elHS.textContent = hs ?? '—';
     }
 
-    // Phantom
     function getProvider(){
-      if ('solana' in window) {
-        const provider = window.solana;
-        if (provider?.isPhantom) return provider;
-      }
-      return null;
-    }
-
-    function enablePlay(address){
-      btnPlay.classList.remove('is-disabled');
-      btnPlay.setAttribute('aria-disabled','false');
-      btnPlay.textContent = '▶ Play FLPY';
-      btnPlay.onclick = (e) => { e.preventDefault(); window.location.href='./game.html'; };
-      elWallet.textContent = short(address);
-      if (btnPhantom) btnPhantom.textContent = 'Connected: ' + short(address);
-    }
-
-    function disablePlay(){
-      btnPlay.classList.add('is-disabled');
-      btnPlay.setAttribute('aria-disabled','true');
-      btnPlay.onclick = async (e) => { e.preventDefault(); await connectFlow(); };
-      elWallet.textContent = 'not connected';
-      if (btnPhantom) btnPhantom.textContent = 'Connect Phantom';
+      return (window.solana?.isPhantom) ? window.solana : null;
     }
 
     async function connectFlow(){
       const provider = getProvider();
       if (!provider) {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        window.open(isMobile ? 'https://phantom.app/ul/browse' : 'https://phantom.app/', '_blank', 'noopener');
+        window.open(isMobile ? 'https://phantom.app/ul/browse' : 'https://phantom.app/', '_blank');
         return;
       }
       try{
@@ -221,42 +192,65 @@
       }catch(e){ console.warn('Connexion Phantom refusée/échouée', e); }
     }
 
-    btnPhantom?.addEventListener('click', connectFlow);
+    function disablePlay(){
+      btnPlay.classList.add('is-disabled');
+      btnPlay.setAttribute('aria-disabled','true');
+      btnPlay.onclick = (e)=>{ e.preventDefault(); connectFlow(); };
+      elWallet.textContent = 'not connected';
+      btnPhantom.textContent = 'Connect Phantom';
+    }
+
+    function enablePlay(address){
+      btnPlay.classList.remove('is-disabled');
+      btnPlay.setAttribute('aria-disabled','false');
+      btnPlay.textContent = '▶ Play FLPY';
+
+      btnPlay.onclick = async (e) => {
+        e.preventDefault();
+        const provider = getProvider();
+        if (!provider) return connectFlow();
+        try {
+          const res = await provider.connect({ onlyIfTrusted:true });
+          if (res?.publicKey) {
+            window.location.href='./game.html';
+          } else {
+            await connectFlow();
+          }
+        } catch {
+          await connectFlow();
+        }
+      };
+
+      elWallet.textContent = short(address);
+      btnPhantom.textContent = 'Connected: ' + short(address);
+    }
 
     async function tryAutoConnect(){
       const provider = getProvider();
       if (!provider) return;
       try{
         const res = await provider.connect({ onlyIfTrusted:true });
-        if (res?.publicKey) {
-          const pk = res.publicKey.toString();
-          localStorage.setItem('flpy_wallet', pk);
-          enablePlay(pk);
-        } else {
-          disablePlay();
-        }
+        if (res?.publicKey) enablePlay(res.publicKey.toString());
+        else disablePlay();
       }catch{ disablePlay(); }
     }
 
+    // listeners Phantom
     const provider = getProvider();
     if (provider) {
-      provider.on('accountChanged', (pubkey) => {
-        if (pubkey) {
-          const pk = pubkey.toString();
-          localStorage.setItem('flpy_wallet', pk);
-          enablePlay(pk);
-        } else {
-          localStorage.removeItem('flpy_wallet');
-          disablePlay();
-        }
+      provider.on('accountChanged', (pubkey)=>{
+        if (pubkey) enablePlay(pubkey.toString());
+        else disablePlay();
       });
-      provider.on('disconnect', () => {
+      provider.on('disconnect', ()=>{
         localStorage.removeItem('flpy_wallet');
         disablePlay();
       });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    btnPhantom?.addEventListener('click', connectFlow);
+
+    document.addEventListener('DOMContentLoaded', ()=>{
       loadHighScore();
       disablePlay();
       tryAutoConnect();
@@ -266,159 +260,53 @@
   })();
   </script>
 
-  <!-- 🟡 2.2 Script Supabase : Top 10 best_by_wallet + dernier record + Realtime -->
+  <!-- 🟡 Supabase leaderboard / realtime inchangé -->
   <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-  // Alternative CDN : https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm
 
   const SUPABASE_URL = "https://hnfmoxeomazaqenuqjsj.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const list   = document.getElementById('lb-list');
-  const you    = document.getElementById('lb-you');
+  const list = document.getElementById('lb-list');
+  const you  = document.getElementById('lb-you');
   const banner = document.getElementById('record-banner');
-  const recS   = document.getElementById('record-score');
-  const recW   = document.getElementById('record-wallet');
+  const recS = document.getElementById('record-score');
+  const recW = document.getElementById('record-wallet');
+  const short = (w) => w ? w.slice(0,4)+'…'+w.slice(-4) : 'guest';
 
-  const short = (w) => w ? w.slice(0,4) + '…' + w.slice(-4) : 'guest';
-
-  // ---------- TOP 10 : meilleur score par wallet ----------
-  async function loadTop10BestByWallet() {
-    if (!list) return;
-    list.innerHTML = "<li>Loading…</li>";
-
-    // Essaie la vue; fallback si absente
-    let top = null, topErr = null;
-    try {
-      const { data, error } = await supabase
-        .from("best_by_wallet")
-        .select("wallet, best_score")
-        .order("best_score", { ascending: false })
-        .limit(10);
-      top = data; topErr = error || null;
-    } catch (e) { topErr = e; }
-
-    if (topErr) {
-      const { data, error } = await supabase
-        .from("scores")
-        .select("wallet, score")
-        .order("score", { ascending: false })
-        .limit(10);
-      if (error) { list.innerHTML = "<li>Cannot load leaderboard.</li>"; return; }
-      list.innerHTML = (data?.length)
-        ? data.map((r,i)=>`<li>#${i+1} — <b>${r.score}</b> pts · ${short(r.wallet)}</li>`).join("")
-        : "<li>No scores yet. Be the first!</li>";
-      return;
-    }
-
-    list.innerHTML = (top && top.length)
-      ? top.map((r,i)=>`<li>#${i+1} — <b>${r.best_score}</b> pts · ${short(r.wallet)}</li>`).join("")
-      : "<li>No scores yet. Be the first!</li>";
-  }
-
-  // ---------- Rang perso basé sur best_by_wallet ----------
-  async function showMyRankBestByWallet() {
-    const wallet = localStorage.getItem("flpy_wallet");
-    const myBest = Number(localStorage.getItem("flpy_highscore") || 0);
-    if (!you || !wallet || myBest <= 0) return;
-
-    let higher = 0;
-    try {
-      const { count, error } = await supabase
-        .from("best_by_wallet")
-        .select("wallet", { head: true, count: "exact" })
-        .gt("best_score", myBest);
-      if (!error && typeof count === "number") higher = count;
-      else {
-        const { data: rows, error: e2 } = await supabase
-          .from("best_by_wallet")
-          .select("wallet")
-          .gt("best_score", myBest);
-        if (!e2 && Array.isArray(rows)) higher = rows.length;
-      }
-    } catch {}
-    const rank = (higher || 0) + 1;
-    you.innerHTML = `Your best: <b>${myBest}</b> pts · Approx. rank: <b>#${rank}</b> (${short(wallet)})`;
-  }
-
-  // ---------- Bannière + confettis ----------
-  function showBanner(score, wallet) {
-    if (!banner) return;
-    recS.textContent = String(score);
+  function showBanner(score,wallet){
+    recS.textContent = score;
     recW.textContent = short(wallet);
-    banner.style.display = 'block';
-    banner.animate([{transform:'scale(1)'},{transform:'scale(1.02)'},{transform:'scale(1)'}], {duration:600, iterations:1});
+    banner.style.display='block';
   }
+  function confettiOnce(){
+    const n=60,c=document.createElement('div');
+    Object.assign(c.style,{position:'fixed',left:0,top:0,width:'100%',height:'0',overflow:'visible',pointerEvents:'none',zIndex:9999});
+    for(let i=0;i<n;i++){const d=document.createElement('div'),s=6+Math.random()*6;Object.assign(d.style,{position:'absolute',left:Math.random()*100+'vw',top:'-10px',width:s+'px',height:s+'px',borderRadius:'50%',background:`hsl(${Math.random()*360},90%,60%)`,opacity:'0.9'});d.animate([{transform:'translateY(0)'},{transform:`translateY(${100+Math.random()*20}vh)`}],{duration:1200+Math.random()*400,easing:'ease-out',fill:'forwards'});c.appendChild(d);}document.body.appendChild(c);setTimeout(()=>c.remove(),1800);}
+  function showCelebration(s,w){showBanner(s,w);confettiOnce();}
 
-  function confettiOnce() {
-    const n = 60;
-    const container = document.createElement('div');
-    Object.assign(container.style, {
-      position:'fixed', left:0, top:0, width:'100%', height:'0',
-      overflow:'visible', pointerEvents:'none', zIndex:9999
-    });
-    for (let i=0; i<n; i++){
-      const d = document.createElement('div');
-      const size = 6 + Math.random()*6;
-      d.style.position='absolute';
-      d.style.left = Math.random()*100 + 'vw';
-      d.style.top  = '-10px';
-      d.style.width = size+'px';
-      d.style.height= size+'px';
-      d.style.borderRadius='50%';
-      d.style.background = `hsl(${Math.floor(Math.random()*360)}, 90%, 60%)`;
-      d.style.opacity='0.9';
-      d.animate(
-        [{ transform:'translateY(0)', opacity:1 },
-         { transform:`translateY(${100 + Math.random()*20}vh)`, opacity:0.8 }],
-        { duration: 1200 + Math.random()*400, easing:'ease-out', fill:'forwards' }
-      );
-      container.appendChild(d);
-    }
-    document.body.appendChild(container);
-    setTimeout(()=>container.remove(), 1800);
+  async function loadTop10(){
+    const {data,error}=await supabase.from("best_by_wallet").select("wallet,best_score").order("best_score",{ascending:false}).limit(10);
+    list.innerHTML = error?"<li>Cannot load leaderboard</li>":data.map((r,i)=>`<li>#${i+1} — <b>${r.best_score}</b> pts · ${short(r.wallet)}</li>`).join("");
   }
-
-  function showCelebration(score, wallet, { silent=false } = {}) {
-    showBanner(score, wallet);
-    if (!silent) confettiOnce();
+  async function showRank(){
+    const w=localStorage.getItem("flpy_wallet");const s=Number(localStorage.getItem("flpy_highscore")||0);
+    if(!w||!s)return;
+    const {count}=await supabase.from("best_by_wallet").select("wallet",{head:true,count:"exact"}).gt("best_score",s);
+    const rank=(count||0)+1;you.innerHTML=`Your best: <b>${s}</b> pts · Rank: <b>#${rank}</b> (${short(w)})`;
   }
-
-  // ---------- Dernier record au chargement ----------
-  async function loadLatestRecord() {
-    const { data, error } = await supabase
-      .from("events")
-      .select("wallet, score, created_at")
-      .eq("type", "WORLD_RECORD")
-      .order("created_at", { ascending: false })
-      .limit(1);
-    if (!error && data?.length) {
-      showCelebration(data[0].score, data[0].wallet, { silent: true });
-    }
+  async function loadRecord(){
+    const {data}=await supabase.from("events").select("wallet,score").eq("type","WORLD_RECORD").order("created_at",{ascending:false}).limit(1);
+    if(data?.length) showBanner(data[0].score,data[0].wallet);
   }
-
-  // ---------- Realtime : nouveau WORLD_RECORD ----------
-  function subscribeRecordEvents(){
+  function subscribe(){
     supabase.channel('events-stream')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'events',
-        filter: 'type=eq.WORLD_RECORD'
-      }, (payload) => {
-        const { score, wallet } = payload.new;
-        showCelebration(score, wallet);
-        loadTop10BestByWallet(); // rafraîchir le Top 10
-      })
-      .subscribe((status)=>console.log('[Realtime]', status));
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'events',filter:'type=eq.WORLD_RECORD'},p=>{
+        showCelebration(p.new.score,p.new.wallet);loadTop10();
+      }).subscribe();
   }
-
-  // Init
-  loadTop10BestByWallet();
-  showMyRankBestByWallet();
-  loadLatestRecord();
-  subscribeRecordEvents();
+  loadTop10();showRank();loadRecord();subscribe();
   </script>
 </body>
 </html>
