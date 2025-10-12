@@ -46,6 +46,8 @@
         <a class="btn btn-ghost" href="./index.html">🏠 Accueil</a>
         <a id="btn-again" class="btn btn-primary" href="./game.html">⟳ Recommencer</a>
       </div>
+      <button id="btn-reward" class="btn btn-ghost">💰 Demander ma récompense</button>
+<p id="reward-status" style="margin-top:10px; color:#cfd7f3; font-size:14px;"></p>
     </div>
   </main>
 
@@ -112,6 +114,48 @@
     const wallet = localStorage.getItem("flpy_wallet") || "guest";
     postScore(wallet, score);
   })();
+</script>
+  <script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = "https://hnfmoxeomazaqenuqjsj.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const btnReward = document.getElementById("btn-reward");
+const statusText = document.getElementById("reward-status");
+
+btnReward?.addEventListener("click", async () => {
+  const wallet = localStorage.getItem("flpy_wallet");
+  const params = new URLSearchParams(location.search);
+  const score = Number(params.get("score") || 0);
+
+  if (!wallet) {
+    statusText.textContent = "❌ Connecte ton wallet Phantom pour demander ta récompense.";
+    return;
+  }
+  if (!score || score <= 0) {
+    statusText.textContent = "❌ Score invalide.";
+    return;
+  }
+
+  btnReward.disabled = true;
+  btnReward.textContent = "⏳ Envoi de la demande...";
+  statusText.textContent = "";
+
+  const { error } = await supabase
+    .from("reward_requests")
+    .insert({ wallet, score });
+
+  if (error) {
+    console.error(error);
+    statusText.textContent = "⚠️ Erreur lors de l'enregistrement.";
+  } else {
+    statusText.textContent = "✅ Demande envoyée ! Tu recevras ta récompense sous peu.";
+  }
+
+  btnReward.textContent = "💰 Demande envoyée";
+});
 </script>
 </body>
 </html>
