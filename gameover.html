@@ -46,6 +46,19 @@
         <a class="btn btn-ghost" href="./index.html">🏠 Accueil</a>
         <a id="btn-again" class="btn btn-primary" href="./game.html">⟳ Recommencer</a>
       </div>
+      <!-- 🎉 WORLD RECORD REWARD -->
+<div id="wr-reward" style="display:none; margin-top:16px; padding:14px 14px;
+  border:1px solid rgba(255,255,255,.18); border-radius:12px; background:rgba(255,208,40,.10);">
+  <div style="font-weight:800; font-size:18px; margin-bottom:6px;">🎉 New WORLD RECORD!</div>
+  <div style="font-size:15px; line-height:1.5;">
+    You earned <b id="wr-amount">—</b> FLPY (<span id="wr-delta">Δ +0</span>).
+    <span id="wr-note" style="color:#d8def7"></span>
+  </div>
+  <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+    <button id="btn-claim" class="btn btn-primary">💰 Claim on Telegram</button>
+    <button id="btn-copy" class="btn btn-ghost">📋 Copy claim text</button>
+  </div>
+</div>
       <button id="btn-reward" class="btn btn-ghost">💰 Demander ma récompense</button>
 <p id="reward-status" style="margin-top:10px; color:#cfd7f3; font-size:14px;"></p>
     </div>
