@@ -83,12 +83,12 @@
     .btn-play:hover{ transform:translateY(-2px); }
     .btn-ghost{ background:rgba(255,255,255,.12); color:var(--fg); border:1px solid rgba(255,255,255,.25); }
 
-    /* ✅ vrai état désactivé */
+    /* true disabled state */
     .is-disabled{
       opacity:.55;
       cursor:not-allowed;
       filter:grayscale(.2);
-      pointer-events:none;   /* plus cliquable du tout */
+      pointer-events:none;
     }
 
     .promo{
@@ -105,6 +105,8 @@
     .card{ background:rgba(255,255,255,.05); border-radius:12px; padding:20px; width:240px; border:1px solid rgba(255,255,255,.1); }
 
     footer{ padding:20px; font-size:14px; color:rgba(255,255,255,.6); }
+
+    /* subtle background glow */
     body{ animation: skyGlow 8s ease-in-out infinite alternate; }
     @keyframes skyGlow{ from{ filter:brightness(1) } to{ filter:brightness(1.07) } }
   </style>
@@ -143,6 +145,7 @@
         <div class="card" id="lb-global">
           <h3>Leaderboard — Top 10</h3>
 
+          <!-- record banner -->
           <div id="record-banner" style="display:none;margin:8px 0 6px;padding:8px 12px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:rgba(255,208,40,.12);font-weight:700;">
             🔥 New world record: <span id="record-score">—</span> pts · <span id="record-wallet">—</span>
           </div>
@@ -158,116 +161,95 @@
 
   <footer>© FLPY — play responsibly · built for fun</footer>
 
-  <!-- ✅ Script Phantom fiable -->
-<script>
-(function(){
-  const btnPlay    = document.getElementById('btn-play');
-  const btnPhantom = document.getElementById('btn-phantom');
-  const elHS       = document.getElementById('last-highscore');
-  const elWallet   = document.getElementById('connected-wallet');
+  <!-- ✅ Phantom connection (simple & robust) -->
+  <script>
+  (function () {
+    const btnPlay    = document.getElementById('btn-play');
+    const btnPhantom = document.getElementById('btn-phantom');
+    const elHS       = document.getElementById('last-highscore');
+    const elWallet   = document.getElementById('connected-wallet');
 
-  const short = (addr) => addr ? addr.slice(0,4)+'...'+addr.slice(-4) : 'not connected';
+    const short = (a) => a ? a.slice(0,4) + '...' + a.slice(-4) : 'not connected';
+    const getProvider = () => (window.solana?.isPhantom) ? window.solana : null;
 
-  function loadHighScore(){
-    const hs = localStorage.getItem('flpy_highscore');
-    elHS.textContent = (hs ?? '—');
-  }
-
-  function getProvider(){
-    return (window.solana?.isPhantom) ? window.solana : null;
-  }
-
-  async function connectFlow(){
-    const provider = getProvider();
-    if (!provider) {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      window.open(isMobile ? 'https://phantom.app/ul/browse' : 'https://phantom.app/', '_blank', 'noopener');
-      return;
-    }
-    try{
-      const res = await provider.connect();
-      if (res?.publicKey) enablePlay(res.publicKey.toString());
-    }catch(e){
-      console.warn('Phantom connect refused/failed', e);
-    }
-  }
-
-  function disablePlay(){
-    btnPlay.classList.add('is-disabled');
-    btnPlay.setAttribute('aria-disabled','true');
-    btnPlay.tabIndex = -1;
-    btnPlay.onclick = (e)=>{ e.preventDefault(); connectFlow(); };
-    elWallet.textContent = 'not connected';
-    btnPhantom.textContent = 'Connect Phantom';
-  }
-
-  function enablePlay(address){
-    btnPlay.classList.remove('is-disabled');
-    btnPlay.setAttribute('aria-disabled','false');
-    btnPlay.tabIndex = 0;
-    btnPlay.textContent = '▶ Play FLPY';
-
-    btnPlay.onclick = async (e) => {
-      e.preventDefault();
-      const provider = getProvider();
-      if (!provider) return connectFlow();
-      try {
-        const res = await provider.connect({ onlyIfTrusted:true });
-        if (res?.publicKey) window.location.href = './game.html';
-        else await connectFlow();
-      } catch {
-        await connectFlow();
-      }
-    };
-
-    elWallet.textContent = short(address);
-    btnPhantom.textContent = 'Connected: ' + short(address);  // 👈 plus de parenthèse en trop
-    localStorage.setItem('flpy_wallet', address);
-  }
-
-  async function tryAutoConnect(){
-    const provider = getProvider();
-    if (!provider) return disablePlay();
-    try{
-      const res = await provider.connect({ onlyIfTrusted:true });
-      if (res?.publicKey) enablePlay(res.publicKey.toString());
-      else disablePlay();
-    }catch{ disablePlay(); }
-  }
-
-  // Événements Phantom
-  const provider = getProvider();
-  if (provider) {
-    provider.on('accountChanged', (pubkey)=>{
-      if (pubkey) enablePlay(pubkey.toString());
-      else {
-        localStorage.removeItem('flpy_wallet');
-        disablePlay();
-      }
-    });
-    provider.on('disconnect', ()=>{
+    function setDisconnectedUI() {
+      btnPlay.classList.add('is-disabled');
+      btnPlay.setAttribute('aria-disabled','true');
+      btnPlay.onclick = (e)=>{ e.preventDefault(); connectPhantom(); };
+      btnPhantom.textContent = 'Connect Phantom';
+      elWallet.textContent = 'not connected';
       localStorage.removeItem('flpy_wallet');
-      disablePlay();
+    }
+
+    function setConnectedUI(address) {
+      btnPlay.classList.remove('is-disabled');
+      btnPlay.setAttribute('aria-disabled','false');
+      btnPlay.textContent = '▶ Play FLPY';
+      btnPhantom.textContent = 'Connected: ' + short(address);
+      elWallet.textContent = short(address);
+      localStorage.setItem('flpy_wallet', address);
+
+      btnPlay.onclick = async (e) => {
+        e.preventDefault();
+        const provider = getProvider();
+        if (!provider) return setDisconnectedUI();
+        try {
+          const res = await provider.connect({ onlyIfTrusted: true });
+          if (res?.publicKey) window.location.href = './game.html';
+          else await connectPhantom();
+        } catch {
+          await connectPhantom();
+        }
+      };
+    }
+
+    async function connectPhantom() {
+      const provider = getProvider();
+      if (!provider) {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        window.open(isMobile ? 'https://phantom.app/ul/browse' : 'https://phantom.app/', '_blank', 'noopener');
+        return;
+      }
+      try {
+        const res = await provider.connect();
+        if (res?.publicKey) setConnectedUI(res.publicKey.toString());
+        else setDisconnectedUI();
+      } catch {
+        setDisconnectedUI();
+      }
+    }
+
+    async function tryAutoConnect() {
+      const provider = getProvider();
+      if (!provider) return setDisconnectedUI();
+      try {
+        const res = await provider.connect({ onlyIfTrusted: true });
+        if (res?.publicKey) setConnectedUI(res.publicKey.toString());
+        else setDisconnectedUI();
+      } catch {
+        setDisconnectedUI();
+      }
+    }
+
+    // optional Phantom events
+    const provider = getProvider();
+    if (provider) {
+      provider.on('accountChanged', (pubkey) => {
+        if (pubkey) setConnectedUI(pubkey.toString());
+        else setDisconnectedUI();
+      });
+      provider.on('disconnect', () => setDisconnectedUI());
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      elHS.textContent = localStorage.getItem('flpy_highscore') ?? '—';
+      setDisconnectedUI();   // default: disabled
+      tryAutoConnect();      // unlock if already approved
     });
-  }
 
-  // Resync quand on revient sur l’onglet
-  window.addEventListener('focus', tryAutoConnect);
-  document.addEventListener('visibilitychange', ()=>{
-    if (document.visibilityState === 'visible') tryAutoConnect();
-  });
-
-  // Init
-  document.addEventListener('DOMContentLoaded', ()=>{
-    loadHighScore();
-    disablePlay();      // état sûr par défaut
-    tryAutoConnect();   // déverrouille si déjà approuvé
-  });
-
-  // Bouton Connect
-  btnPhantom?.addEventListener('click', connectFlow);
-})();
-</script>
+    btnPhantom?.addEventListener('click', connectPhantom);
+  })();
+  </script>
 
   <!-- 🟡 Supabase leaderboard + realtime -->
   <script type="module">
@@ -304,7 +286,6 @@
   function showCelebration(score,wallet){ showBanner(score,wallet); confettiOnce(); }
 
   async function loadTop10(){
-    // vue best_by_wallet (meilleur score par wallet)
     const { data, error } = await supabase
       .from("best_by_wallet")
       .select("wallet,best_score")
