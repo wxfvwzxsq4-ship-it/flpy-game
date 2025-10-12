@@ -80,5 +80,28 @@
   });
 })();
 </script>
+  <script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+  const SUPABASE_URL = "https://xxxxx.supabase.co";      // ← remplace
+  const SUPABASE_ANON_KEY = "ey...";                     // ← remplace
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  (async function pushScore(){
+    const params = new URLSearchParams(location.search);
+    const score = Number(params.get('score') || 0);
+    if (!score) return;
+
+    const wallet = localStorage.getItem('flpy_wallet') || null;
+
+    // Option: n’insérer que si c’est le meilleur du wallet aujourd’hui
+    try {
+      await supabase.from('scores').insert({ wallet, score });
+      // (on ignore la réponse ici; affichage déjà géré par ta page)
+    } catch (e) {
+      console.warn('Insert score failed', e);
+    }
+  })();
+</script>
 </body>
 </html>
