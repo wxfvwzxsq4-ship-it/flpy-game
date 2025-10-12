@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>FLPY — Admin Dashboard</title>
+  <meta name="theme-color" content="#0b1220"/>
+  <style>
+    :root{ --bg:#0b1220; --fg:#e9eefb; --accent:#ffd028; --muted:#93a2c8; }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html,body{
+      height:100%;
+      background:radial-gradient(1200px 600px at 70% -10%, #1a2140 0%, #0b1220 46%, #070b16 100%);
+      color:var(--fg);
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+    }
+    header{
+      padding:22px 28px; display:flex; justify-content:space-between; align-items:center;
+    }
+    a{ color:#fff; text-decoration:none; font-weight:700; }
+    .wrap{ max-width:1000px; margin:0 auto; padding:20px; }
+    h1{ font-size:26px; margin-bottom:20px; }
+    .card{
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+      border-radius:16px; padding:20px; margin-top:20px;
+    }
+    table{ width:100%; border-collapse:collapse; margin-top:10px; font-size:14px; }
+    th,td{ padding:10px; border-bottom:1px solid rgba(255,255,255,.1); text-align:left; vertical-align:top; }
+    th{ color:#cfd7f3; font-weight:700; }
+    .btn{
+      appearance:none; border:none; cursor:pointer;
+      padding:10px 16px; border-radius:12px; font-weight:700;
+      color:#2a2100; background:var(--accent);
+      box-shadow:0 6px 16px rgba(255,208,40,.3);
+      transition:transform .1s ease, box-shadow .2s ease;
+    }
+    .btn:hover{ transform:translateY(-2px); }
+    .gate{
+      display:grid; place-items:center; min-height:40vh; text-align:center; gap:14px;
+      background:rgba(255,255,255,.04); border:1px dashed rgba(255,255,255,.2); border-radius:16px; padding:24px;
+    }
+    .muted{ color:#cfd7f3; }
+    .hidden{ display:none; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="./index.html">← Retour au site</a>
+    <h2>Admin FLPY</h2>
+  </header>
+
+  <div class="wrap">
+    <h1>Dashboard — Scores & Records</h1>
+
+    <!-- Portail Phantom -->
+    <div id="gate" class="gate">
+      <div>
+        <p class="muted">Accès réservé. Connecte ton wallet Phantom admin pour continuer.</p>
+        <button id="btn-phantom" class="btn">Connect Phantom</button>
+        <p id="gate-msg" class="muted"></p>
+      </div>
+    </div>
+
+    <!-- Contenu admin (masqué tant que non validé) -->
+    <div id="admin-content" class="hidden">
+      <div class="card">
+        <h3>🏆 Top Scores</h3>
+        <table id="score-table">
+          <thead>
+            <tr><th>#</th><th>Wallet</th><th>Score</th><th>Date</th></tr>
+          </thead>
+          <tbody><tr><td colspan="4">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>🎉 World Records</h3>
+        <table id="events-table">
+          <thead>
+            <tr><th>Date</th><th>Wallet</th><th>Score</th></tr>
+          </thead>
+          <tbody><tr><td colspan="3">Chargement…</td></tr></tbody>
+        </table>
+        <button id="btn-refresh" class="btn" style="margin-top:14px;">🔄 Refresh</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Solana web3 (pour Phantom) -->
+  <script src="https://unpkg.com/@solana/web3.js@1.95.2/lib/index.iife.min.js"></script>
+
+  <!-- Supabase + logique -->
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    // 🛡️ REMPLACE par TON wallet admin
+    const ADMIN_WALLET = "7TNpDMWUv5f8cxNBFfYYaLzZTYNr9Mza8zwxnKWmAwob";
+
+    const SUPABASE_URL = "https://hnfmoxeomazaqenuqjsj.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const gate = document.getElementById('gate');
+    const adminContent = document.getElementById('admin-content');
+    const gateMsg = document.getElementById('gate-msg');
+    const btnPhantom = document.getElementById('btn-phantom');
+
+    const tblScores = document.querySelector("#score-table tbody");
+    const tblEvents = document.querySelector("#events-table tbody");
+    const btnRefresh = document.getElementById("btn-refresh");
+
+    const short = (w) => w ? w.slice(0,4)+"…"+w.slice(-4) : "guest";
+    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+    function getProvider(){
+      if ('solana' in window && window.solana?.isPhantom) return window.solana;
+      return null;
+    }
+
+    async function requireAdmin(){
+      const provider = getProvider();
+      if (!provider) {
+        gateMsg.textContent = "Installe Phantom pour continuer (desktop ou mobile).";
+        return false;
+      }
+      try{
+        const res = await provider.connect({ onlyIfTrusted: true });
+        const pk = res?.publicKey?.toString();
+        if (pk && pk === ADMIN_WALLET) return true;
+      }catch{}
+      // Si non déjà approuvé, demande connexion
+      try{
+        const res = await provider.connect();
+        const pk = res?.publicKey?.toString();
+        if (pk === ADMIN_WALLET) return true;
+        gateMsg.textContent = `Accès refusé pour ${short(pk)} — ce n’est pas le wallet admin.`;
+        return false;
+      }catch(e){
+        gateMsg.textContent = "Connexion Phantom annulée.";
+        return false;
+      }
+    }
+
+    async function loadScores(){
+      tblScores.innerHTML = `<tr><td colspan="4">Chargement…</td></tr>`;
+      const { data, error } = await supabase
+        .from("scores")
+        .select("wallet,score,created_at")
+        .order("score",{ascending:false})
+        .limit(50);
+      if(error){ tblScores.innerHTML = `<tr><td colspan="4">Erreur: ${esc(error.message)}</td></tr>`; return; }
+      if(!data?.length){ tblScores.innerHTML = `<tr><td colspan="4">Aucun résultat.</td></tr>`; return; }
+      tblScores.innerHTML = data.map((r,i)=>
+        `<tr><td>${i+1}</td><td>${esc(short(r.wallet))}</td><td><b>${r.score}</b></td><td>${new Date(r.created_at).toLocaleString()}</td></tr>`
+      ).join("");
+    }
+
+    async function loadEvents(){
+      tblEvents.innerHTML = `<tr><td colspan="3">Chargement…</td></tr>`;
+      const { data, error } = await supabase
+        .from("events")
+        .select("wallet,score,created_at")
+        .eq("type","WORLD_RECORD")
+        .order("created_at",{ascending:false})
+        .limit(10);
+      if(error){ tblEvents.innerHTML = `<tr><td colspan="3">Erreur: ${esc(error.message)}</td></tr>`; return; }
+      if(!data?.length){ tblEvents.innerHTML = `<tr><td colspan="3">Aucun record pour le moment.</td></tr>`; return; }
+      tblEvents.innerHTML = data.map(r=>
+        `<tr><td>${new Date(r.created_at).toLocaleString()}</td><td>${esc(short(r.wallet))}</td><td><b>${r.score}</b></td></tr>`
+      ).join("");
+    }
+
+    async function enter(){
+      const ok = await requireAdmin();
+      if (!ok) return;
+      gate.classList.add('hidden');
+      adminContent.classList.remove('hidden');
+      await Promise.all([loadScores(), loadEvents()]);
+    }
+
+    btnPhantom.addEventListener('click', enter);
+    // Tentative auto si déjà autorisé
+    enter();
+
+    btnRefresh?.addEventListener('click', async ()=> {
+      await Promise.all([loadScores(), loadEvents()]);
+    });
+  </script>
+</body>
+</html>
