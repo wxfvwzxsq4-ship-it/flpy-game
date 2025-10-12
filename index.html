@@ -260,5 +260,70 @@
     });
   })();
   </script>
+  <script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+  const SUPABASE_URL = "https://xxxxx.supabase.co";   // ← remplace
+  const SUPABASE_ANON_KEY = "ey...";                  // ← remplace
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const list = document.getElementById('lb-list');
+  const you  = document.getElementById('lb-you');
+
+  const short = (w) => w ? w.slice(0,4) + '…' + w.slice(-4) : 'guest';
+
+  async function loadTop10() {
+    if (!list) return;
+    list.innerHTML = "<li>Loading…</li>";
+
+    const { data, error } = await supabase
+      .from('scores')
+      .select('wallet, score, created_at')
+      .order('score', { ascending: false })
+      .limit(10);
+
+    if (error) {
+      list.innerHTML = "<li>Cannot load leaderboard.</li>";
+      return;
+    }
+
+    list.innerHTML = data.map((r, i) =>
+      `<li>#${i+1} — <b>${r.score}</b> pts · ${short(r.wallet)}</li>`
+    ).join("");
+
+    // Ta position (approx) si connecté
+    const wallet = localStorage.getItem('flpy_wallet');
+    if (you && wallet) {
+      // On calcule un rang approximatif : nombre de scores >= ton meilleur score
+      const myBest = Number(localStorage.getItem('flpy_highscore') || 0);
+      if (myBest > 0) {
+        const { data: cntData, error: cntErr } = await supabase
+          .from('scores')
+          .select('score', { count: 'exact', head: true })
+          .gte('score', myBest);
+
+        const rank = !cntErr && cntData === null && typeof cntErr === 'object'
+          ? null
+          : (cntErr ? null : (cntErr ?? false));
+
+        // Petite subtilité Supabase head:true : le "count" est disponible via .count (SDK)
+        const { count } = await supabase
+          .from('scores')
+          .select('score', { count: 'exact', head: true })
+          .gte('score', myBest);
+
+        if (typeof count === 'number') {
+          you.innerHTML = `Your best: <b>${myBest}</b> pts · Approx. rank: <b>#${count}</b> (${short(wallet)})`;
+        } else {
+          you.innerHTML = `Your best: <b>${myBest}</b> pts (${short(wallet)})`;
+        }
+      } else {
+        you.textContent = `Connect & play to appear here.`;
+      }
+    }
+  }
+
+  loadTop10();
+</script>
 </body>
 </html>
