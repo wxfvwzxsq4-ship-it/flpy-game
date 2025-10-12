@@ -36,7 +36,7 @@
       position:relative;
     }
 
-    /* Logo FLPY (en haut à gauche) */
+    /* Logo FLPY texte à gauche */
     .brand{
       display:flex;
       flex-direction:column;
@@ -45,17 +45,9 @@
       color:var(--fg);
       font-weight:700;
       font-size:20px;
-      position:relative;
     }
 
-    .brand img{
-      width:44px;
-      height:44px;
-      margin-bottom:6px;
-      image-rendering:pixelated;
-    }
-
-    /* Bannière juste sous le logo */
+    /* Bannière sous le texte FLPY */
     .promo-header{
       margin-top:10px;
       width:240px;
@@ -72,7 +64,7 @@
       border:1px solid rgba(255,255,255,.08);
     }
 
-    /* Bouton Telegram à droite */
+    /* Lien Telegram à droite */
     .social{
       color:var(--fg);
       text-decoration:none;
@@ -92,6 +84,7 @@
       min-height:calc(100vh - 160px);
     }
 
+    /* --- Logo FLPY au centre (dans la hero) --- */
     .hero img.logo{
       width:120px;
       height:120px;
@@ -180,10 +173,9 @@
 <body>
   <header>
     <div class="brand">
-      <img src="./flpy.png" alt="FLPY logo">
       FLPY
 
-      <!-- 🎮 Bannière juste sous le logo -->
+      <!-- 🎮 Bannière sous le texte FLPY -->
       <div class="promo-header">
         <img src="./flpy.gif" alt="FLPY gameplay banner" loading="lazy" />
       </div>
@@ -194,6 +186,8 @@
 
   <main>
     <section class="hero">
+      <!-- Logo FLPY centré -->
+      <img class="logo" src="./flpy.png" alt="FLPY coin" />
       <h2>The Flying Coin — Ready?</h2>
       <p class="lead">Tap, dodge, and try to set the world record. Every run counts.</p>
 
