@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FLPY — Game Over</title>
+  <meta name="theme-color" content="#0b1220" />
+  <style>
+    :root{ --bg:#0b1220; --fg:#e9eefb; --accent:#ffd028; --muted:#93a2c8; }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html,body{ height:100%; background:radial-gradient(1200px 600px at 70% -10%, #1a2140 0%, #0b1220 46%, #070b16 100%); color:var(--fg); font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; }
+    .wrap{ min-height:100%; display:grid; grid-template-rows:1fr auto; }
+    header{ padding:22px 28px; display:flex; justify-content:space-between; align-items:center; }
+    header a{ color:var(--fg); text-decoration:none; font-weight:700; }
+    main{ display:grid; place-items:center; padding:30px 16px; text-align:center; }
+    .card{ background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:16px; padding:28px 22px; width:min(720px,92vw); box-shadow:0 12px 30px rgba(0,0,0,.35); }
+    .title{ font-size:34px; margin-bottom:8px; }
+    .score{ font-size:22px; color:var(--muted); margin-bottom:18px; }
+    .big{ font-size:48px; font-weight:800; color:#fff; letter-spacing:.5px; }
+    .hs{ margin-top:8px; font-size:16px; color:#cfd7f3; }
+    .actions{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:24px; }
+    .btn{ appearance:none; border:none; cursor:pointer; padding:14px 24px; border-radius:12px; font-weight:800; text-decoration:none; transition:transform .08s ease, box-shadow .2s ease; }
+    .btn-primary{ background:var(--accent); color:#2a2100; box-shadow:0 8px 24px rgba(255,208,40,.35); }
+    .btn-primary:hover{ transform:translateY(-2px); }
+    .btn-ghost{ background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.25); }
+    footer{ text-align:center; color:#95a3cf; font-size:13px; padding:18px; }
+    img.logo{ width:64px; height:64px; image-rendering:pixelated; margin-bottom:8px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="./index.html">← FLPY</a>
+    <a href="https://t.me/flpycommunity" target="_blank" rel="noopener">Telegram</a>
+  </header>
+
+  <main>
+    <div class="card">
+      <img class="logo" src="./flpy.png" alt="FLPY logo">
+      <div class="title">Game Over</div>
+      <div class="score">Your score</div>
+      <div class="big" id="final-score">0</div>
+      <div class="hs">High Score: <b id="high-score">—</b></div>
+
+      <div class="actions">
+        <a class="btn btn-ghost" href="./index.html">🏠 Accueil</a>
+        <a id="btn-again" class="btn btn-primary" href="./game.html">⟳ Recommencer</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>© FLPY — play responsibly</footer>
+</div>
+
+<script>
+(function(){
+  // Récupère ?score=... depuis l’URL
+  const params = new URLSearchParams(window.location.search);
+  const score = Number(params.get('score') || 0);
+
+  // Affiche le score
+  const elFinal = document.getElementById('final-score');
+  elFinal.textContent = String(score);
+
+  // Met à jour le High Score local
+  const prev = Number(localStorage.getItem('flpy_highscore') || 0);
+  if (score > prev) localStorage.setItem('flpy_highscore', String(score));
+  const hs = Number(localStorage.getItem('flpy_highscore') || 0);
+  document.getElementById('high-score').textContent = String(hs);
+
+  // Option : si score absent (accès direct), retourne au jeu
+  if (!params.has('score')) {
+    // window.location.replace('./game.html');
+  }
+
+  // Bouton "Recommencer" peut forcer rechargement propre du jeu
+  document.getElementById('btn-again')?.addEventListener('click', (e)=>{
+    // Par défaut le lien fait l’affaire; si ton jeu a besoin d’un reload dur :
+    // e.preventDefault(); window.location.href = './game.html';
+  });
+})();
+</script>
+</body>
+</html>
