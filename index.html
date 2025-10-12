@@ -161,95 +161,83 @@
 
   <footer>© FLPY — play responsibly · built for fun</footer>
 
-  <!-- ✅ Phantom connection (simple & robust) -->
   <script>
-  (function () {
-    const btnPlay    = document.getElementById('btn-play');
-    const btnPhantom = document.getElementById('btn-phantom');
-    const elHS       = document.getElementById('last-highscore');
-    const elWallet   = document.getElementById('connected-wallet');
+(function () {
+  const btnPlay    = document.getElementById('btn-play');
+  const btnPhantom = document.getElementById('btn-phantom');
+  const elHS       = document.getElementById('last-highscore');
+  const elWallet   = document.getElementById('connected-wallet');
 
-    const short = (a) => a ? a.slice(0,4) + '...' + a.slice(-4) : 'not connected';
-    const getProvider = () => (window.solana?.isPhantom) ? window.solana : null;
+  const short = (a) => a ? a.slice(0,4) + '...' + a.slice(-4) : 'not connected';
+  const getProvider = () => (window.solana?.isPhantom) ? window.solana : null;
 
-    function setDisconnectedUI() {
-      btnPlay.classList.add('is-disabled');
-      btnPlay.setAttribute('aria-disabled','true');
-      btnPlay.onclick = (e)=>{ e.preventDefault(); connectPhantom(); };
-      btnPhantom.textContent = 'Connect Phantom';
-      elWallet.textContent = 'not connected';
-      localStorage.removeItem('flpy_wallet');
-    }
+  function setDisconnectedUI() {
+    btnPlay.classList.add('is-disabled');
+    btnPlay.setAttribute('aria-disabled','true');
+    btnPlay.onclick = (e)=>{ e.preventDefault(); connectPhantom(); };
+    btnPhantom.textContent = 'Connect Phantom';
+    elWallet.textContent = 'not connected';
+    localStorage.removeItem('flpy_wallet');
+  }
 
-    function setConnectedUI(address) {
-      btnPlay.classList.remove('is-disabled');
-      btnPlay.setAttribute('aria-disabled','false');
-      btnPlay.textContent = '▶ Play FLPY';
-      btnPhantom.textContent = 'Connected: ' + short(address);
-      elWallet.textContent = short(address);
-      localStorage.setItem('flpy_wallet', address);
+  function setConnectedUI(address) {
+    btnPlay.classList.remove('is-disabled');
+    btnPlay.setAttribute('aria-disabled','false');
+    btnPlay.textContent = '▶ Play FLPY';
+    btnPhantom.textContent = 'Connected: ' + short(address);
+    elWallet.textContent = short(address);
+    localStorage.setItem('flpy_wallet', address);
 
-      btnPlay.onclick = async (e) => {
-        e.preventDefault();
-        const provider = getProvider();
-        if (!provider) return setDisconnectedUI();
-        try {
-          const res = await provider.connect({ onlyIfTrusted: true });
-          if (res?.publicKey) window.location.href = './game.html';
-          else await connectPhantom();
-        } catch {
-          await connectPhantom();
-        }
-      };
-    }
-
-    async function connectPhantom() {
-      const provider = getProvider();
-      if (!provider) {
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        window.open(isMobile ? 'https://phantom.app/ul/browse' : 'https://phantom.app/', '_blank', 'noopener');
-        return;
-      }
-      try {
-        const res = await provider.connect();
-        if (res?.publicKey) setConnectedUI(res.publicKey.toString());
-        else setDisconnectedUI();
-      } catch {
-        setDisconnectedUI();
-      }
-    }
-
-    async function tryAutoConnect() {
+    btnPlay.onclick = async (e) => {
+      e.preventDefault();
       const provider = getProvider();
       if (!provider) return setDisconnectedUI();
       try {
+        // On revalide que Phantom nous laisse passer sans pop-up
         const res = await provider.connect({ onlyIfTrusted: true });
-        if (res?.publicKey) setConnectedUI(res.publicKey.toString());
-        else setDisconnectedUI();
+        if (res?.publicKey) window.location.href = './game.html';
+        else await connectPhantom();
       } catch {
-        setDisconnectedUI();
+        await connectPhantom();
       }
-    }
+    };
+  }
 
-    // optional Phantom events
+  async function connectPhantom() {
     const provider = getProvider();
-    if (provider) {
-      provider.on('accountChanged', (pubkey) => {
-        if (pubkey) setConnectedUI(pubkey.toString());
-        else setDisconnectedUI();
-      });
-      provider.on('disconnect', () => setDisconnectedUI());
+    if (!provider) {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      window.open(isMobile ? 'https://phantom.app/ul/browse' : 'https://phantom.app/', '_blank', 'noopener');
+      return;
     }
+    try {
+      const res = await provider.connect(); // interaction explicite
+      if (res?.publicKey) setConnectedUI(res.publicKey.toString());
+      else setDisconnectedUI();
+    } catch {
+      setDisconnectedUI();
+    }
+  }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      elHS.textContent = localStorage.getItem('flpy_highscore') ?? '—';
-      setDisconnectedUI();   // default: disabled
-      tryAutoConnect();      // unlock if already approved
+  // Écoute les changements/déconnexions Phantom
+  const provider = getProvider();
+  if (provider) {
+    provider.on('accountChanged', (pubkey)=>{
+      if (pubkey) setConnectedUI(pubkey.toString());
+      else setDisconnectedUI();
     });
+    provider.on('disconnect', setDisconnectedUI);
+  }
 
-    btnPhantom?.addEventListener('click', connectPhantom);
-  })();
-  </script>
+  // Init: on N’ESSAYE PLUS d’auto-connecter.
+  document.addEventListener('DOMContentLoaded', () => {
+    elHS.textContent = localStorage.getItem('flpy_highscore') ?? '—';
+    setDisconnectedUI(); // toujours grisé au chargement
+  });
+
+  btnPhantom?.addEventListener('click', connectPhantom);
+})();
+</script>
 
   <!-- 🟡 Supabase leaderboard + realtime -->
   <script type="module">
