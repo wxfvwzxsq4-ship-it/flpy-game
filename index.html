@@ -31,47 +31,32 @@
     header{
       display:flex;
       justify-content:space-between;
-      align-items:flex-start;
+      align-items:center;
       padding:24px 48px;
-      position:relative;
     }
 
-    /* Logo FLPY texte à gauche */
     .brand{
       display:flex;
-      flex-direction:column;
-      align-items:flex-start;
+      align-items:center;
       text-decoration:none;
       color:var(--fg);
       font-weight:700;
       font-size:20px;
     }
 
-    /* Bannière sous le texte FLPY */
-    .promo-header{
-      margin-top:10px;
-      width:240px;
-      display:flex;
-      justify-content:flex-start;
-    }
-
-    .promo-header img{
-      width:100%;
-      height:auto;
-      border-radius:8px;
+    .brand img{
+      width:44px;
+      height:44px;
+      margin-right:10px;
       image-rendering:pixelated;
-      box-shadow:0 6px 20px rgba(0,0,0,.4);
-      border:1px solid rgba(255,255,255,.08);
     }
 
-    /* Lien Telegram à droite */
     .social{
       color:var(--fg);
       text-decoration:none;
       font-size:15px;
       opacity:.8;
       transition:opacity .2s;
-      margin-top:10px;
     }
     .social:hover{ opacity:1; }
 
@@ -81,10 +66,9 @@
       flex-direction:column;
       align-items:center;
       justify-content:center;
-      min-height:calc(100vh - 160px);
+      min-height:calc(100vh - 120px);
     }
 
-    /* --- Logo FLPY au centre (dans la hero) --- */
     .hero img.logo{
       width:120px;
       height:120px;
@@ -167,26 +151,41 @@
       from { filter: brightness(1); }
       to { filter: brightness(1.07); }
     }
+
+    /* --- Bannière GIF sous le bouton --- */
+    .promo{
+      margin: 18px auto 0;
+      width: 100%;
+      max-width: 980px;
+      display: flex;
+      justify-content: flex-start; /* alignée à gauche */
+    }
+    .promo img{
+      width: min(100%, 720px);
+      height: auto;
+      border-radius: 12px;
+      image-rendering: pixelated;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    @media (max-width: 640px){
+      .promo{ justify-content: center; }
+      .promo img{ width: 100%; }
+    }
   </style>
 </head>
 
 <body>
   <header>
-    <div class="brand">
+    <a class="brand" href="/">
+      <img src="./flpy.png" alt="FLPY logo">
       FLPY
-
-      <!-- 🎮 Bannière sous le texte FLPY -->
-      <div class="promo-header">
-        <img src="./flpy.gif" alt="FLPY gameplay banner" loading="lazy" />
-      </div>
-    </div>
-
+    </a>
     <a class="social" href="https://t.me/flpycommunity" target="_blank" rel="noopener">Telegram</a>
   </header>
 
   <main>
     <section class="hero">
-      <!-- Logo FLPY centré -->
       <img class="logo" src="./flpy.png" alt="FLPY coin" />
       <h2>The Flying Coin — Ready?</h2>
       <p class="lead">Tap, dodge, and try to set the world record. Every run counts.</p>
@@ -194,6 +193,11 @@
       <div class="actions">
         <a class="btn btn-play" href="./game.html">▶ Play FLPY</a>
         <a class="btn btn-ghost" href="https://pump.fun" target="_blank" rel="noopener">View on Pump.fun</a>
+      </div>
+
+      <!-- 🎮 Bannière GIF sous les boutons -->
+      <div class="promo">
+        <img src="./flpy.gif" alt="FLPY gameplay banner" loading="lazy" />
       </div>
 
       <div class="grid">
