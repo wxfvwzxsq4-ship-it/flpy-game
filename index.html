@@ -175,7 +175,7 @@
     btnPlay.classList.add('is-disabled');
     btnPlay.setAttribute('aria-disabled','true');
     btnPlay.onclick = (e)=>{ e.preventDefault(); connectPhantom(); };
-    btnPhantom.textContent = 'Connect Phantom';
+    btnPhantom.textContent = 'Connect Phantom to Play';
     elWallet.textContent = 'not connected';
     localStorage.removeItem('flpy_wallet');
   }
