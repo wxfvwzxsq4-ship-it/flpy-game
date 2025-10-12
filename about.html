@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FLPY — About & How it works</title>
+  <meta name="description" content="What is FLPY? Learn the rules, leaderboard, record events, rewards and privacy." />
+  <meta name="theme-color" content="#00b7ff" />
+
+  <style>
+    :root{
+      --bg:#0b1220; --fg:#e9eefb; --accent:#ffd028; --muted:#93a2c8;
+      --tg1:#2AABEE; --tg2:#229ED9; --card:rgba(255,255,255,.05); --line:rgba(255,255,255,.12);
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html,body{ height:100%; background:radial-gradient(1200px 600px at 70% -10%, #1a2140 0%, #0b1220 46%, #070b16 100%); color:var(--fg); font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial; }
+    a{ color:#fff; text-decoration:none; }
+    header{
+      display:flex; align-items:center; justify-content:space-between; padding:24px 28px;
+    }
+    .brand{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:18px; }
+    .brand img{ width:36px; height:36px; image-rendering:pixelated; }
+    .btn-social{
+      background:linear-gradient(135deg,var(--tg1),var(--tg2)); color:#fff; font-weight:700; font-size:14px;
+      padding:10px 16px; border-radius:12px; box-shadow:0 4px 16px rgba(34,158,217,.35);
+    }
+    main{ max-width:900px; margin:0 auto; padding:10px 18px 48px; }
+    .hero{
+      margin-top:8px; padding:24px; border:1px solid var(--line); background:var(--card); border-radius:16px;
+      display:flex; align-items:center; gap:18px;
+    }
+    .hero img{ width:72px; height:72px; image-rendering:pixelated; }
+    .hero h1{ font-size:28px; margin-bottom:6px; }
+    .lead{ color:var(--muted); }
+
+    .toc{ margin:22px 0 18px; display:flex; flex-wrap:wrap; gap:10px; }
+    .chip{
+      padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid var(--line);
+      font-size:14px;
+    }
+    section.card{
+      margin-top:16px; padding:18px 18px; border:1px solid var(--line); background:var(--card); border-radius:16px;
+    }
+    section.card h2{ font-size:20px; margin-bottom:8px; }
+    p{ line-height:1.55; margin:10px 0; color:#dce3fb; }
+    ul{ margin:8px 0 0 18px; color:#dce3fb; }
+    code{ background:rgba(255,255,255,.08); border:1px solid var(--line); padding:2px 6px; border-radius:6px; }
+
+    details{ border:1px solid var(--line); background:rgba(255,255,255,.04); border-radius:12px; padding:12px 14px; }
+    details+details{ margin-top:8px; }
+    details summary{ cursor:pointer; font-weight:700; }
+    footer{ margin:36px 0 16px; text-align:center; color:rgba(255,255,255,.65); font-size:14px; }
+    .btn-row{ display:flex; gap:12px; flex-wrap:wrap; margin-top:14px; }
+    .btn{
+      appearance:none; border:1px solid var(--line); background:rgba(255,255,255,.1); color:#fff; border-radius:12px;
+      padding:12px 16px; font-weight:800; cursor:pointer;
+    }
+    .btn-primary{ background:var(--accent); color:#2a2100; border:none; box-shadow:0 8px 24px rgba(255,208,40,.35); }
+  </style>
+</head>
+<body>
+  <header>
+    <!-- Retour à l’accueil -->
+    <a class="brand" href="./index.html" title="Back to Home">
+      <img src="./flpy.png" alt="FLPY logo" /> <span>FLPY</span>
+    </a>
+    <a class="btn-social" href="https://t.me/+hZGqh1DHN6w1MWE8" target="_blank" rel="noopener">💬 Join FLPY Telegram</a>
+  </header>
+
+  <main>
+    <div class="hero">
+      <img src="./flpy.png" alt="FLPY coin" />
+      <div>
+        <h1>What is FLPY?</h1>
+        <p class="lead">An arcade-simple “tap & dodge” coin game with a global, public leaderboard. Set a world record, trigger a celebration, and claim symbolic rewards.</p>
+        <div class="btn-row">
+          <a class="btn" href="./index.html">← Back to game</a>
+          <a class="btn btn-primary" href="./game.html">▶ Play now</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="toc">
+      <a class="chip" href="#how-to-play">How to play</a>
+      <a class="chip" href="#scores">Scores & High score</a>
+      <a class="chip" href="#leaderboard">Global leaderboard</a>
+      <a class="chip" href="#records">Record events</a>
+      <a class="chip" href="#rewards">Symbolic rewards</a>
+      <a class="chip" href="#anti-cheat">Fair-play & anti-cheat</a>
+      <a class="chip" href="#tech">Tech & privacy</a>
+      <a class="chip" href="#faq">FAQ</a>
+    </div>
+
+    <section id="how-to-play" class="card">
+      <h2>How to play</h2>
+      <p>Tap (or press space/↑) to keep the coin flying. Avoid pipes. Each pair of pipes passed = +1 point. Falling off screen or touching a pipe ends the run.</p>
+      <ul>
+        <li>Mobile: tap the screen</li>
+        <li>Desktop: press <code>Space</code> or <code>ArrowUp</code></li>
+      </ul>
+    </section>
+
+    <section id="scores" class="card">
+      <h2>Scores & High score</h2>
+      <p>Your best score is kept locally in your browser (<code>localStorage</code>), so you always see your personal high score.</p>
+      <p>When a run ends, the result is sent to the server. If your wallet is connected, the score is linked to your address; otherwise it’s recorded as “guest”.</p>
+    </section>
+
+    <section id="leaderboard" class="card">
+      <h2>Global leaderboard</h2>
+      <p>The homepage shows the public Top 10. To make rankings fair, we display the <b>best score per wallet</b> (not every single run). This prevents spam and keeps the board readable.</p>
+    </section>
+
+    <section id="records" class="card">
+      <h2>Record events</h2>
+      <p>When someone beats the all-time world record, a site-wide celebration fires (banner + confetti). The event is written to a dedicated table and streamed live to every visitor.</p>
+    </section>
+
+    <section id="rewards" class="card">
+      <h2>Symbolic rewards</h2>
+      <p>For some milestones (like a new world record), we offer a small symbolic FLPY tip. Right now this is a manual process via a “Claim reward” button where you share your wallet address.</p>
+      <p>Automation (airdrops or NFTs) may come later.</p>
+    </section>
+
+    <section id="anti-cheat" class="card">
+      <h2>Fair-play & anti-cheat</h2>
+      <ul>
+        <li>Edge Function validates inputs and throttles runs (e.g. 1 score/10s per wallet).</li>
+        <li>Score bounds (e.g. 0 – 1000) to reject obviously fake values.</li>
+        <li>Server-side logic writes to DB; clients never touch privileged keys.</li>
+      </ul>
+    </section>
+
+    <section id="tech" class="card">
+      <h2>Tech & privacy</h2>
+      <ul>
+        <li><b>Supabase</b> for database, policies (RLS), and realtime.</li>
+        <li><b>Edge Function</b> to validate + insert scores securely.</li>
+        <li><b>Phantom</b> wallet connect is optional for guests.</li>
+        <li>No cookies needed; local high score stays in your browser only.</li>
+      </ul>
+      <p>Open-source-ish spirit: simple HTML/JS, no heavy framework required.</p>
+    </section>
+
+    <section id="faq" class="card">
+      <h2>FAQ</h2>
+      <details>
+        <summary>Do I need Phantom to play?</summary>
+        <p>No. You can play as a guest. Connecting a wallet lets you appear on the leaderboard under your address and claim rewards.</p>
+      </details>
+      <details>
+        <summary>How are scores ranked?</summary>
+        <p>We rank by best score per wallet. The Top 10 is refreshed live. Your approximate rank is computed from the distribution of best scores.</p>
+      </details>
+      <details>
+        <summary>What happens during a new world record?</summary>
+        <p>A public “WORLD_RECORD” event is inserted; all visitors see a banner + confetti in realtime.</p>
+      </details>
+      <details>
+        <summary>Can I suggest features?</summary>
+        <p>Absolutely — join the Telegram group and drop your ideas!</p>
+      </details>
+    </section>
+
+    <footer>© FLPY — play responsibly · built for fun</footer>
+  </main>
+</body>
+</html>
