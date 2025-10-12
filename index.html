@@ -19,7 +19,6 @@
       --tg1: #2AABEE;
       --tg2: #229ED9;
     }
-
     *{ box-sizing: border-box; margin:0; padding:0; }
 
     html, body{
@@ -31,163 +30,90 @@
     }
 
     header{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
+      display:flex; justify-content:space-between; align-items:center;
       padding:24px 48px;
     }
-
     .brand{
-      display:flex;
-      align-items:center;
-      text-decoration:none;
-      color:var(--fg);
-      font-weight:700;
-      font-size:20px;
+      display:flex; align-items:center; text-decoration:none; color:var(--fg);
+      font-weight:700; font-size:20px;
     }
+    .brand img{ width:44px; height:44px; margin-right:10px; image-rendering:pixelated; }
 
-    .brand img{
-      width:44px;
-      height:44px;
-      margin-right:10px;
-      image-rendering:pixelated;
-    }
-
-    /* Bouton Telegram (plus visible) */
-    .btn-social {
+    /* Bouton Telegram plus visible */
+    .btn-social{
       background: linear-gradient(135deg, var(--tg1), var(--tg2));
-      color: #fff;
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 16px;
-      padding: 12px 22px;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(34,158,217,0.35);
-      transition: transform 0.1s ease, box-shadow 0.3s ease, filter 0.2s;
+      color:#fff; text-decoration:none; font-weight:700; font-size:16px;
+      padding:12px 22px; border-radius:12px;
+      box-shadow:0 4px 16px rgba(34,158,217,0.35);
+      transition: transform .1s, box-shadow .3s, filter .2s;
     }
-    .btn-social:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(34,158,217,0.5); filter: brightness(1.08); }
+    .btn-social:hover{ transform:translateY(-2px); box-shadow:0 6px 24px rgba(34,158,217,.5); filter:brightness(1.08); }
 
     main{
       padding:40px 20px;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
       min-height:calc(100vh - 120px);
     }
 
-    .hero img.logo{
-      width:120px;
-      height:120px;
-      image-rendering:pixelated;
-    }
+    .hero img.logo{ width:120px; height:120px; image-rendering:pixelated; }
+    .hero h2{ font-size:32px; margin:20px 0 10px; }
+    .hero p.lead{ font-size:18px; color:var(--muted); margin-bottom:12px; }
 
-    .hero h2{
-      font-size:32px;
-      margin:20px 0 10px;
+    /* Ligne d'info High Score */
+    .stats{
+      display:flex; gap:12px; justify-content:center; align-items:center;
+      margin:8px 0 18px;
+      flex-wrap:wrap;
+      color:#cfd7f3;
     }
-
-    .hero p.lead{
-      font-size:18px;
-      color:var(--muted);
-      margin-bottom:28px;
+    .pill{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      padding:8px 14px; border-radius:999px; font-size:14px; font-weight:600;
     }
+    .pill b{ color:#fff; }
 
     .actions{
-      display:flex;
-      gap:16px;
-      justify-content:center;
-      flex-wrap:wrap;
-      margin-bottom:26px;
+      display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:26px;
     }
-
     .btn{
-      appearance:none;
-      border:none;
-      cursor:pointer;
-      padding:14px 28px;
-      border-radius:12px;
-      font-weight:700;
-      text-decoration:none;
-      transition:transform .08s ease, box-shadow .2s ease, filter .2s ease, opacity .2s ease;
+      appearance:none; border:none; cursor:pointer;
+      padding:14px 28px; border-radius:12px; font-weight:700; text-decoration:none;
+      transition: transform .08s, box-shadow .2s, filter .2s, opacity .2s;
     }
-
-    .btn-play{
-      background:var(--accent);
-      color:#2a2100;
-      box-shadow:0 8px 24px rgba(255,208,40,.4);
-    }
+    .btn-play{ background:var(--accent); color:#2a2100; box-shadow:0 8px 24px rgba(255,208,40,.4); }
     .btn-play:hover{ transform:translateY(-2px); }
+    .btn-ghost{ background:rgba(255,255,255,.12); color:var(--fg); border:1px solid rgba(255,255,255,.25); }
 
-    .btn-ghost{
-      background:rgba(255,255,255,.12);
-      color:var(--fg);
-      border:1px solid rgba(255,255,255,.25);
-    }
+    /* État désactivé tant que Phantom n'est pas connecté */
+    .is-disabled{ opacity:.55; cursor:not-allowed; filter:grayscale(.1); pointer-events:auto; }
 
-    /* État désactivé (tant que Phantom n'est pas connecté) */
-    .is-disabled{
-      opacity: .55;
-      cursor: not-allowed;
-      filter: grayscale(.1);
-      pointer-events: auto; /* on capture le clic pour lancer la connexion */
-    }
-
-    /* --- Bannière GIF centrée sous les boutons --- */
+    /* Bannière GIF centrée sous les boutons */
     .promo{
-      margin: 0 auto 20px;
-      width: 100%;
-      max-width: 720px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      margin:0 auto 20px; width:100%; max-width:720px;
+      display:flex; justify-content:center; align-items:center;
     }
     .promo img{
-      width: 100%;
-      height: auto;
-      border-radius: 12px;
-      image-rendering: pixelated;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      border: 1px solid rgba(255,255,255,.08);
+      width:100%; height:auto; border-radius:12px; image-rendering:pixelated;
+      box-shadow:0 10px 30px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.08);
     }
-    @media (max-width: 640px){
-      .promo img{ width: 100%; }
-    }
+    @media (max-width:640px){ .promo img{ width:100%; } }
 
-    .grid{
-      margin-top:32px;
-      display:flex;
-      gap:20px;
-      flex-wrap:wrap;
-      justify-content:center;
-      max-width:800px;
-    }
+    .grid{ margin-top:32px; display:flex; gap:20px; flex-wrap:wrap; justify-content:center; max-width:800px; }
+    .card{ background:rgba(255,255,255,.05); border-radius:12px; padding:20px; width:240px; border:1px solid rgba(255,255,255,.1); }
 
-    .card{
-      background:rgba(255,255,255,.05);
-      border-radius:12px;
-      padding:20px;
-      width:240px;
-      border:1px solid rgba(255,255,255,.1);
-    }
-
-    footer{
-      padding:20px;
-      font-size:14px;
-      color:rgba(255,255,255,.6);
-    }
+    footer{ padding:20px; font-size:14px; color:rgba(255,255,255,.6); }
 
     /* Animation douce du fond */
-    body { animation: skyGlow 8s ease-in-out infinite alternate; }
-    @keyframes skyGlow { from { filter: brightness(1); } to { filter: brightness(1.07); } }
+    body{ animation: skyGlow 8s ease-in-out infinite alternate; }
+    @keyframes skyGlow{ from{ filter:brightness(1) } to{ filter:brightness(1.07) } }
   </style>
 </head>
 
 <body>
   <header>
     <a class="brand" href="/">
-      <img src="./flpy.png" alt="FLPY logo">
-      FLPY
+      <img src="./flpy.png" alt="FLPY logo"> FLPY
     </a>
     <a class="btn-social" href="https://t.me/flpycommunity" target="_blank" rel="noopener">💬 Join Telegram</a>
   </header>
@@ -198,45 +124,52 @@
       <h2>The Flying Coin — Ready?</h2>
       <p class="lead">Tap, dodge, and try to set the world record. Every run counts.</p>
 
+      <!-- Affichage du dernier High Score -->
+      <div class="stats">
+        <div class="pill">Last High Score: <b id="last-highscore">—</b></div>
+        <div class="pill">Wallet: <b id="connected-wallet">not connected</b></div>
+      </div>
+
       <div class="actions">
-        <!-- Le bouton Play est désactivé tant que Phantom n'est pas connecté -->
+        <!-- Play verrouillé tant que Phantom n'est pas connecté -->
         <a id="btn-play" class="btn btn-play is-disabled" href="#" role="button" aria-disabled="true">▶ Play FLPY</a>
         <a class="btn btn-ghost" href="https://pump.fun" target="_blank" rel="noopener">View on Pump.fun</a>
         <button id="btn-phantom" class="btn btn-ghost" type="button">Connect Phantom</button>
       </div>
 
-      <!-- 🎮 Bannière GIF centrée sous les boutons -->
+      <!-- GIF sous les boutons -->
       <div class="promo">
         <img src="./flpy.gif" alt="FLPY gameplay banner" loading="lazy" />
       </div>
 
       <div class="grid">
-        <div class="card">
-          <h3>Leaderboard (soon)</h3>
-          <p>Global best scores will appear here. Beat the record to be featured.</p>
-        </div>
-        <div class="card">
-          <h3>Record Events</h3>
-          <p>When someone sets a world record, a site-wide celebration triggers.</p>
-        </div>
-        <div class="card">
-          <h3>Community</h3>
-          <p>Join the Telegram to share clips, scores, and feedback.</p>
-        </div>
+        <div class="card"><h3>Leaderboard (soon)</h3><p>Global best scores will appear here. Beat the record to be featured.</p></div>
+        <div class="card"><h3>Record Events</h3><p>When someone sets a world record, a site-wide celebration triggers.</p></div>
+        <div class="card"><h3>Community</h3><p>Join the Telegram to share clips, scores, and feedback.</p></div>
       </div>
     </section>
   </main>
 
   <footer>© FLPY — play responsibly · built for fun</footer>
 
-  <!-- Script Phantom : connexion requise avant de jouer -->
+  <!-- Script Phantom + High Score -->
   <script>
   (function(){
-    const btnPlay = document.getElementById('btn-play');
-    const btnPhantom = document.getElementById('btn-phantom');
+    const btnPlay   = document.getElementById('btn-play');
+    const btnPhantom= document.getElementById('btn-phantom');
+    const elHS      = document.getElementById('last-highscore');
+    const elWallet  = document.getElementById('connected-wallet');
 
-    const short = (addr) => addr ? addr.slice(0,4) + '...' + addr.slice(-4) : '';
+    const short = (addr) => addr ? addr.slice(0,4) + '...' + addr.slice(-4) : 'not connected';
 
+    // ----- High Score (localStorage) -----
+    function loadHighScore(){
+      // Le jeu doit écrire localStorage.setItem('flpy_highscore', score)
+      const hs = localStorage.getItem('flpy_highscore');
+      elHS.textContent = (hs !== null && hs !== undefined) ? hs : '—';
+    }
+
+    // ----- Phantom -----
     function getProvider(){
       if ('solana' in window) {
         const provider = window.solana;
@@ -247,92 +180,79 @@
 
     function enablePlay(address){
       btnPlay.classList.remove('is-disabled');
-      btnPlay.setAttribute('aria-disabled', 'false');
+      btnPlay.setAttribute('aria-disabled','false');
       btnPlay.textContent = '▶ Play FLPY';
-      // clique -> ouvre le jeu
-      btnPlay.onclick = (e) => {
-        e.preventDefault();
-        window.location.href = './game.html';
-      };
-      // feedback sur bouton connect
+      btnPlay.onclick = (e) => { e.preventDefault(); window.location.href='./game.html'; };
+      elWallet.textContent = short(address);
       if (btnPhantom) btnPhantom.textContent = 'Connected: ' + short(address);
     }
 
     function disablePlay(){
       btnPlay.classList.add('is-disabled');
-      btnPlay.setAttribute('aria-disabled', 'true');
-      btnPlay.onclick = async (e) => {
-        e.preventDefault();
-        await connectFlow();
-      };
+      btnPlay.setAttribute('aria-disabled','true');
+      btnPlay.onclick = async (e) => { e.preventDefault(); await connectFlow(); };
+      elWallet.textContent = 'not connected';
       if (btnPhantom) btnPhantom.textContent = 'Connect Phantom';
     }
 
     async function connectFlow(){
       const provider = getProvider();
       if (!provider) {
-        // Pas de Phantom → ouvrir page d’installation
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const url = isMobile ? 'https://phantom.app/ul/browse' : 'https://phantom.app/';
-        window.open(url, '_blank', 'noopener');
+        window.open(isMobile ? 'https://phantom.app/ul/browse' : 'https://phantom.app/', '_blank', 'noopener');
         return;
       }
-      try {
-        const res = await provider.connect(); // demande d’autorisation
+      try{
+        const res = await provider.connect();
         if (res?.publicKey) {
           const pk = res.publicKey.toString();
           localStorage.setItem('flpy_wallet', pk);
           enablePlay(pk);
         }
-      } catch (e) {
-        console.warn('Connexion Phantom refusée/échouée', e);
-      }
+      }catch(e){ console.warn('Connexion Phantom refusée/échouée', e); }
     }
 
-    // Clic manuel sur "Connect Phantom"
     btnPhantom?.addEventListener('click', connectFlow);
 
-    // Tentative de reconnexion silencieuse si déjà approuvé
     async function tryAutoConnect(){
       const provider = getProvider();
       if (!provider) return;
-      try {
-        const res = await provider.connect({ onlyIfTrusted: true });
+      try{
+        const res = await provider.connect({ onlyIfTrusted:true });
         if (res?.publicKey) {
           const pk = res.publicKey.toString();
-          enablePlay(pk);
           localStorage.setItem('flpy_wallet', pk);
+          enablePlay(pk);
         } else {
           disablePlay();
         }
-      } catch {
-        disablePlay();
-      }
+      }catch{ disablePlay(); }
     }
 
-    // Écoute des changements de compte/déconnexion
     const provider = getProvider();
     if (provider) {
       provider.on('accountChanged', (pubkey) => {
         if (pubkey) {
           const pk = pubkey.toString();
-          enablePlay(pk);
           localStorage.setItem('flpy_wallet', pk);
+          enablePlay(pk);
         } else {
-          disablePlay();
           localStorage.removeItem('flpy_wallet');
+          disablePlay();
         }
       });
       provider.on('disconnect', () => {
-        disablePlay();
         localStorage.removeItem('flpy_wallet');
+        disablePlay();
       });
     }
 
-    // Init
     document.addEventListener('DOMContentLoaded', () => {
-      disablePlay();      // par défaut verrouillé
+      loadHighScore();
+      disablePlay();      // par défaut
       tryAutoConnect();   // déverrouille si déjà approuvé
+      const saved = localStorage.getItem('flpy_wallet');
+      if (saved) elWallet.textContent = short(saved);
     });
   })();
   </script>
