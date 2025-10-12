@@ -52,9 +52,9 @@
   <footer>© FLPY — play responsibly</footer>
 </div>
 
+<!-- UI + local highscore -->
 <script>
 (function(){
-  // Récupère ?score=... depuis l’URL
   const params = new URLSearchParams(window.location.search);
   const score = Number(params.get('score') || 0);
 
@@ -62,45 +62,59 @@
   const elFinal = document.getElementById('final-score');
   elFinal.textContent = String(score);
 
-  // Met à jour le High Score local
+  // High score local
   const prev = Number(localStorage.getItem('flpy_highscore') || 0);
   if (score > prev) localStorage.setItem('flpy_highscore', String(score));
   const hs = Number(localStorage.getItem('flpy_highscore') || 0);
   document.getElementById('high-score').textContent = String(hs);
 
-  // Option : si score absent (accès direct), retourne au jeu
-  if (!params.has('score')) {
-    // window.location.replace('./game.html');
-  }
+  // (optionnel) Si pas de score dans l'URL, on pourrait renvoyer au jeu
+  // if (!params.has('score')) window.location.replace('./game.html');
 
-  // Bouton "Recommencer" peut forcer rechargement propre du jeu
   document.getElementById('btn-again')?.addEventListener('click', (e)=>{
-    // Par défaut le lien fait l’affaire; si ton jeu a besoin d’un reload dur :
-    // e.preventDefault(); window.location.href = './game.html';
+    // par défaut, le lien suffit
   });
 })();
 </script>
-  <script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  const SUPABASE_URL = "https://hnfmoxeomazaqenuqjsj.supabase.co";      // ← remplace
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";                     // ← remplace
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<!-- Envoi sécurisé du score à l’Edge Function (avec Authorization) -->
+<script>
+  const SUPABASE_FN_URL = "https://hnfmoxeomazaqenuqjsj.functions.supabase.co/smooth-service";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";
 
-  (async function pushScore(){
+  async function postScore(wallet, score) {
+    try {
+      const res = await fetch(SUPABASE_FN_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ wallet, score })
+      });
+      const json = await res.json().catch(()=> ({}));
+      if (!res.ok) {
+        console.warn("[postScore] refusé:", json);
+      } else {
+        console.log("[postScore] OK:", json);
+      }
+    } catch (e) {
+      console.error("[postScore] network error", e);
+    }
+  }
+
+  // Envoie une seule fois par chargement de page
+  (function sendOnce(){
     const params = new URLSearchParams(location.search);
     const score = Number(params.get('score') || 0);
     if (!score) return;
 
-    const wallet = localStorage.getItem('flpy_wallet') || null;
+    // petit garde-fou anti double-post si on recharge
+    if (sessionStorage.getItem('flpy_posted') === '1') return;
+    sessionStorage.setItem('flpy_posted', '1');
 
-    // Option: n’insérer que si c’est le meilleur du wallet aujourd’hui
-    try {
-      await supabase.from('scores').insert({ wallet, score });
-      // (on ignore la réponse ici; affichage déjà géré par ta page)
-    } catch (e) {
-      console.warn('Insert score failed', e);
-    }
+    const wallet = localStorage.getItem('flpy_wallet') || "guest";
+    postScore(wallet, score);
   })();
 </script>
 </body>
