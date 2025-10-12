@@ -170,5 +170,99 @@ btnReward?.addEventListener("click", async () => {
   btnReward.textContent = "💰 Demande envoyée";
 });
 </script>
+  <script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// 🔧 Supabase
+const SUPABASE_URL = "https://hnfmoxeomazaqenuqjsj.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// 🔗 Ton groupe Telegram
+const TELEGRAM_GROUP_URL = "https://t.me/+hZGqh1DHN6w1MWE8";
+
+// 🔢 Barème de récompense (Δ = nouveau WR - ancien WR)
+function payoutForDelta(delta) {
+  if (delta >= 21) return 20000;
+  if (delta >= 11) return 10000;
+  if (delta >= 6)  return 5000;
+  if (delta >= 3)  return 2500;
+  if (delta >= 0)  return 1000; // record battu de 0–2
+  return 0;
+}
+
+// 📊 Détecte si la run actuelle est le WR (via events) et calcule la reward
+async function detectWRAndShow() {
+  const params = new URLSearchParams(location.search);
+  const finalScore = Number(params.get("score") || 0);
+  if (!finalScore) return;
+
+  // On regarde les 2 derniers events WORLD_RECORD
+  const { data: evts, error } = await supabase
+    .from("events")
+    .select("wallet, score, created_at")
+    .eq("type", "WORLD_RECORD")
+    .order("created_at", { ascending: false })
+    .limit(2);
+
+  if (error || !evts || evts.length === 0) return;
+
+  const latest = evts[0];
+  const prev   = evts[1] || null;
+
+  // Si le dernier WR correspond à notre score, on affiche la récompense
+  const isThisRunWR = (latest.score === finalScore);
+  if (!isThisRunWR) return;
+
+  const previousScore = prev ? prev.score : 0;
+  const delta = Math.max(0, latest.score - previousScore);
+  const reward = payoutForDelta(delta);
+
+  if (reward <= 0) return;
+
+  // UI
+  const $wrap   = document.getElementById("wr-reward");
+  const $amount = document.getElementById("wr-amount");
+  const $delta  = document.getElementById("wr-delta");
+  const $note   = document.getElementById("wr-note");
+  const $claim  = document.getElementById("btn-claim");
+  const $copy   = document.getElementById("btn-copy");
+
+  const wallet  = localStorage.getItem("flpy_wallet") || "guest";
+
+  $amount.textContent = reward.toLocaleString();
+  $delta.textContent  = `Δ +${delta}`;
+  $note.textContent   = wallet === "guest"
+    ? " (tip: connect a wallet next time to link rewards to your address)"
+    : ` · Wallet: ${wallet.slice(0,4)}…${wallet.slice(-4)}`;
+
+  const claimText = `WR Claim — FLPY
+Score: ${finalScore} (Δ +${delta})
+Reward: ${reward} FLPY
+Wallet: ${wallet}
+Timestamp: ${new Date().toISOString()}
+Please verify and send. Thank you!`;
+
+  async function copyClaim() {
+    try {
+      await navigator.clipboard.writeText(claimText);
+      alert("Claim text copied to clipboard. Paste it in Telegram.");
+    } catch {
+      prompt("Copy this claim text:", claimText);
+    }
+  }
+
+  $claim.addEventListener("click", async () => {
+    await copyClaim();
+    window.open(TELEGRAM_GROUP_URL, "_blank", "noopener");
+  });
+
+  $copy.addEventListener("click", copyClaim);
+
+  $wrap.style.display = "block";
+}
+
+detectWRAndShow();
+</script>
 </body>
 </html>
