@@ -219,15 +219,25 @@
     }
   }
 
-  // Écoute les changements/déconnexions Phantom
-  const provider = getProvider();
-  if (provider) {
-    provider.on('accountChanged', (pubkey)=>{
-      if (pubkey) setConnectedUI(pubkey.toString());
-      else setDisconnectedUI();
-    });
-    provider.on('disconnect', setDisconnectedUI);
-  }
+// Événements Phantom — version synchronisée avec localStorage
+const provider = getProvider();
+if (provider) {
+  provider.on('accountChanged', (pubkey)=>{
+    if (pubkey) {
+      const addr = pubkey.toString();
+      localStorage.setItem('flpy_wallet', addr);
+      enablePlay(addr);
+    } else {
+      localStorage.removeItem('flpy_wallet');
+      disablePlay();
+    }
+  });
+
+  provider.on('disconnect', ()=>{
+    localStorage.removeItem('flpy_wallet');
+    disablePlay();
+  });
+}
 
   // Init: on N’ESSAYE PLUS d’auto-connecter.
   document.addEventListener('DOMContentLoaded', () => {
