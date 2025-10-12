@@ -79,7 +79,7 @@
 
 <!-- Envoi sécurisé du score à l’Edge Function (avec Authorization) -->
 <script>
-  const SUPABASE_FN_URL = "https://hnfmoxeomazaqenuqjsj.functions.supabase.co/smooth-service";
+  const SUPABASE_FN_URL = "https://hnfmoxeomazaqenuqjsj.functions.supabase.co/functions/v1/smooth-service";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuZm1veGVvbWF6YXFlbnVxanNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjcwMDQsImV4cCI6MjA3NTgwMzAwNH0.-u1OuGPpHo-DqBWWmRTURth8MQnLJZ5AAqoGC-EuPRI";
 
   async function postScore(wallet, score) {
