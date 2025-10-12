@@ -16,6 +16,8 @@
       --fg: #e9eefb;
       --accent: #ffd028;
       --muted: #93a2c8;
+      --tg1: #2AABEE;
+      --tg2: #229ED9;
     }
 
     *{ box-sizing: border-box; margin:0; padding:0; }
@@ -51,14 +53,19 @@
       image-rendering:pixelated;
     }
 
-    .social{
-      color:var(--fg);
-      text-decoration:none;
-      font-size:15px;
-      opacity:.8;
-      transition:opacity .2s;
+    /* Bouton Telegram (plus visible) */
+    .btn-social {
+      background: linear-gradient(135deg, var(--tg1), var(--tg2));
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 12px 22px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(34,158,217,0.35);
+      transition: transform 0.1s ease, box-shadow 0.3s ease, filter 0.2s;
     }
-    .social:hover{ opacity:1; }
+    .btn-social:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(34,158,217,0.5); filter: brightness(1.08); }
 
     main{
       padding:40px 20px;
@@ -91,7 +98,7 @@
       gap:16px;
       justify-content:center;
       flex-wrap:wrap;
-      margin-bottom:26px; /* léger espace avant le GIF */
+      margin-bottom:26px;
     }
 
     .btn{
@@ -102,7 +109,7 @@
       border-radius:12px;
       font-weight:700;
       text-decoration:none;
-      transition:transform .08s ease, box-shadow .2s ease;
+      transition:transform .08s ease, box-shadow .2s ease, filter .2s ease, opacity .2s ease;
     }
 
     .btn-play{
@@ -110,13 +117,20 @@
       color:#2a2100;
       box-shadow:0 8px 24px rgba(255,208,40,.4);
     }
-
     .btn-play:hover{ transform:translateY(-2px); }
 
     .btn-ghost{
       background:rgba(255,255,255,.12);
       color:var(--fg);
       border:1px solid rgba(255,255,255,.25);
+    }
+
+    /* État désactivé (tant que Phantom n'est pas connecté) */
+    .is-disabled{
+      opacity: .55;
+      cursor: not-allowed;
+      filter: grayscale(.1);
+      pointer-events: auto; /* on capture le clic pour lancer la connexion */
     }
 
     /* --- Bannière GIF centrée sous les boutons --- */
@@ -128,7 +142,6 @@
       justify-content: center;
       align-items: center;
     }
-
     .promo img{
       width: 100%;
       height: auto;
@@ -137,7 +150,6 @@
       box-shadow: 0 10px 30px rgba(0,0,0,.35);
       border: 1px solid rgba(255,255,255,.08);
     }
-
     @media (max-width: 640px){
       .promo img{ width: 100%; }
     }
@@ -166,14 +178,8 @@
     }
 
     /* Animation douce du fond */
-    body {
-      animation: skyGlow 8s ease-in-out infinite alternate;
-    }
-
-    @keyframes skyGlow {
-      from { filter: brightness(1); }
-      to { filter: brightness(1.07); }
-    }
+    body { animation: skyGlow 8s ease-in-out infinite alternate; }
+    @keyframes skyGlow { from { filter: brightness(1); } to { filter: brightness(1.07); } }
   </style>
 </head>
 
@@ -183,7 +189,7 @@
       <img src="./flpy.png" alt="FLPY logo">
       FLPY
     </a>
-    <a class="social" href="https://t.me/flpycommunity" target="_blank" rel="noopener">Telegram</a>
+    <a class="btn-social" href="https://t.me/flpycommunity" target="_blank" rel="noopener">💬 Join Telegram</a>
   </header>
 
   <main>
@@ -193,10 +199,10 @@
       <p class="lead">Tap, dodge, and try to set the world record. Every run counts.</p>
 
       <div class="actions">
-        <a class="btn btn-play" href="./game.html">▶ Play FLPY</a>
+        <!-- Le bouton Play est désactivé tant que Phantom n'est pas connecté -->
+        <a id="btn-play" class="btn btn-play is-disabled" href="#" role="button" aria-disabled="true">▶ Play FLPY</a>
         <a class="btn btn-ghost" href="https://pump.fun" target="_blank" rel="noopener">View on Pump.fun</a>
-        <!-- Bouton Connect Phantom (optionnel) -->
-        <!-- <button id="btn-phantom" class="btn btn-ghost" type="button">Connect Phantom</button> -->
+        <button id="btn-phantom" class="btn btn-ghost" type="button">Connect Phantom</button>
       </div>
 
       <!-- 🎮 Bannière GIF centrée sous les boutons -->
@@ -209,12 +215,10 @@
           <h3>Leaderboard (soon)</h3>
           <p>Global best scores will appear here. Beat the record to be featured.</p>
         </div>
-
         <div class="card">
           <h3>Record Events</h3>
           <p>When someone sets a world record, a site-wide celebration triggers.</p>
         </div>
-
         <div class="card">
           <h3>Community</h3>
           <p>Join the Telegram to share clips, scores, and feedback.</p>
@@ -224,5 +228,113 @@
   </main>
 
   <footer>© FLPY — play responsibly · built for fun</footer>
+
+  <!-- Script Phantom : connexion requise avant de jouer -->
+  <script>
+  (function(){
+    const btnPlay = document.getElementById('btn-play');
+    const btnPhantom = document.getElementById('btn-phantom');
+
+    const short = (addr) => addr ? addr.slice(0,4) + '...' + addr.slice(-4) : '';
+
+    function getProvider(){
+      if ('solana' in window) {
+        const provider = window.solana;
+        if (provider?.isPhantom) return provider;
+      }
+      return null;
+    }
+
+    function enablePlay(address){
+      btnPlay.classList.remove('is-disabled');
+      btnPlay.setAttribute('aria-disabled', 'false');
+      btnPlay.textContent = '▶ Play FLPY';
+      // clique -> ouvre le jeu
+      btnPlay.onclick = (e) => {
+        e.preventDefault();
+        window.location.href = './game.html';
+      };
+      // feedback sur bouton connect
+      if (btnPhantom) btnPhantom.textContent = 'Connected: ' + short(address);
+    }
+
+    function disablePlay(){
+      btnPlay.classList.add('is-disabled');
+      btnPlay.setAttribute('aria-disabled', 'true');
+      btnPlay.onclick = async (e) => {
+        e.preventDefault();
+        await connectFlow();
+      };
+      if (btnPhantom) btnPhantom.textContent = 'Connect Phantom';
+    }
+
+    async function connectFlow(){
+      const provider = getProvider();
+      if (!provider) {
+        // Pas de Phantom → ouvrir page d’installation
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const url = isMobile ? 'https://phantom.app/ul/browse' : 'https://phantom.app/';
+        window.open(url, '_blank', 'noopener');
+        return;
+      }
+      try {
+        const res = await provider.connect(); // demande d’autorisation
+        if (res?.publicKey) {
+          const pk = res.publicKey.toString();
+          localStorage.setItem('flpy_wallet', pk);
+          enablePlay(pk);
+        }
+      } catch (e) {
+        console.warn('Connexion Phantom refusée/échouée', e);
+      }
+    }
+
+    // Clic manuel sur "Connect Phantom"
+    btnPhantom?.addEventListener('click', connectFlow);
+
+    // Tentative de reconnexion silencieuse si déjà approuvé
+    async function tryAutoConnect(){
+      const provider = getProvider();
+      if (!provider) return;
+      try {
+        const res = await provider.connect({ onlyIfTrusted: true });
+        if (res?.publicKey) {
+          const pk = res.publicKey.toString();
+          enablePlay(pk);
+          localStorage.setItem('flpy_wallet', pk);
+        } else {
+          disablePlay();
+        }
+      } catch {
+        disablePlay();
+      }
+    }
+
+    // Écoute des changements de compte/déconnexion
+    const provider = getProvider();
+    if (provider) {
+      provider.on('accountChanged', (pubkey) => {
+        if (pubkey) {
+          const pk = pubkey.toString();
+          enablePlay(pk);
+          localStorage.setItem('flpy_wallet', pk);
+        } else {
+          disablePlay();
+          localStorage.removeItem('flpy_wallet');
+        }
+      });
+      provider.on('disconnect', () => {
+        disablePlay();
+        localStorage.removeItem('flpy_wallet');
+      });
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+      disablePlay();      // par défaut verrouillé
+      tryAutoConnect();   // déverrouille si déjà approuvé
+    });
+  })();
+  </script>
 </body>
 </html>
