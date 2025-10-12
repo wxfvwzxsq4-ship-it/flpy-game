@@ -6,6 +6,27 @@
     <title>Document</title>
     <link rel="stylesheet" href="style.css">
 </head>
+ <script>
+(function(){
+  // exigence minimale : avoir un wallet en localStorage
+  const w = localStorage.getItem('flpy_wallet');
+  if (!w) {
+    // pas de wallet => retour accueil
+    window.location.replace('./index.html');
+    return;
+  }
+
+  // optionnel (plus strict) : tenter onlyIfTrusted
+  const provider = window.solana;
+  if (provider?.isPhantom) {
+    provider.connect({ onlyIfTrusted:true })
+      .then(res => {
+        if (!res?.publicKey) window.location.replace('./index.html');
+      })
+      .catch(() => window.location.replace('./index.html'));
+  }
+})();
+</script>   
 <body>
     <canvas id="board"></canvas>
     <script src="app.js"></script>
@@ -26,3 +47,4 @@
     margin: 0 auto;
   }
 </style>
+
